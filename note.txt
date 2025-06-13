@@ -1,1 +1,108 @@
+GameAgent/
+├── index.html          # 主入口文件
+├── css/
+│   └── style.css       # 所有样式集中在此
+└── js/
+    ├── firebase-init.js
+    ├── webrtc-conn.js
+    ├── game-logic.js
+    ├── ui-render.js
+    └── utils.js
+		
+以下是基于 **WebRTC + Firebase** 的 **模块化棋牌游戏系统设计**，采用渐进式开发策略，你可以逐步实现核心功能，再扩展高级特性。  
+
+---
+
+## **1. 系统架构概览**
+整个系统分为 **前端（浏览器/移动端）** 和 **后端（Firebase + WebRTC）**，采用 **P2P + 信令服务器** 模式：
+
+```
+┌──────────────┐       ┌──────────────┐       ┌──────────────┐
+│   Player 1   │ ◄───► │   Firebase   │ ◄───► │   Player 2   │
+│ (Browser)    │       │ (Signaling)  │       │ (Browser)    │
+└──────────────┘       └──────────────┘       └──────────────┘
+       ▲                                           ▲
+       │                                           │
+       ▼                                           ▼
+┌───────────────────────────────────────────────────────┐
+│                   WebRTC (P2P DataChannel)            │
+└───────────────────────────────────────────────────────┘
+```
+
+### **核心模块**
+1. **前端（HTML/JS）**  
+   - 游戏界面（棋盘/卡牌）  
+   - WebRTC 连接管理  
+   - 游戏逻辑（回合制/实时）  
+2. **后端（Firebase）**  
+   - 信令服务器（交换 SDP/IceCandidate）  
+   - 房间管理（匹配玩家）  
+   - 游戏状态备份（断线恢复）  
+
+---
+
+## **2. 分阶段实现**
+### **阶段 1：基础 P2P 通信（2-4 人联机）**
+#### **功能目标**
+- ✅ 玩家通过 **房间号** 加入同一局游戏  
+- ✅ 使用 **WebRTC DataChannel** 传输游戏数据（如棋子移动、出牌）  
+- ✅ 基本 UI（棋盘/卡牌渲染）  
+
+
+### **阶段 2：房间管理与状态同步**
+#### **功能目标**
+- ✅ **自动匹配玩家**（Firebase 查询可用房间）  
+- ✅ **游戏状态备份**（Firebase 存储当前棋局/牌局）  
+- ✅ **断线重连**（从 Firebase 恢复游戏）  
+
+
+### **阶段 3：高级功能扩展**
+#### **可选功能**
+- **语音聊天**（WebRTC `getUserMedia` + 音频传输）  
+- **观战模式**（Firebase 广播游戏状态）  
+- **AI 对战**（集成 Stockfish.js 或 Poker AI）  
+- **排行榜 & 成就系统**（Firebase Auth + Firestore）  
+
+## **4. 测试与迭代**
+1. **本地测试**：用 `ngrok` 暴露本地服务器，让朋友加入测试  
+2. **监控 Firebase 用量**：避免超出免费限额  
+3. **逐步增加功能**：如先实现象棋，再扩展扑克  
+
+---
+
+## **总结**
+| 阶段 | 功能 | 技术栈 |
+|------|------|--------|
+| **1. 基础联机** | P2P 通信 + 简单 UI | WebRTC + Firebase |
+| **2. 房间管理** | 自动匹配 + 状态备份 | Firebase Realtime DB |
+| **3. 高级功能** | 语音/AI/观战 | 扩展 WebRTC API 
+|
+
+
+Firebase: gameagent-c75fe
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCW2qJyqA82vnyLz58INpCn0qVnN_IRtmo",
+    authDomain: "gameagent-c75fe.firebaseapp.com",
+    databaseURL: "https://gameagent-c75fe-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "gameagent-c75fe",
+    storageBucket: "gameagent-c75fe.firebasestorage.app",
+    messagingSenderId: "516319255553",
+    appId: "1:516319255553:web:a209a091d4b5416e767400",
+    measurementId: "G-F8TVWG0FCJ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
 
