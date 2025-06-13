@@ -12,14 +12,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 配置PeerJS（增加ICE服务器）
     window.peer = new Peer({
-        debug: 0, // 关闭内部日志
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
-            ]
-        }
-    });
+		    host: 'peerjs.com',
+		    port: 443,
+		    path: '/',
+		    secure: true,
+		    debug: 1,
+		    config: {
+		        iceServers: [
+		            { urls: 'stun:stun.l.google.com:19302' },
+		            { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
+		        ]
+		    }
+		});
 
     // 增强错误处理
     peer.on('error', err => {
