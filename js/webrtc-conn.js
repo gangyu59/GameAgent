@@ -10,8 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 全局连接池
     window.connections = {};
     
-    // 配置PeerJS（增加ICE服务器）
-window.peer = new Peer({
+window.peer = new Peer(undefined, {
     host: '0.peerjs.com',
     port: 443,
     path: '/',
