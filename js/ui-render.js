@@ -19,24 +19,26 @@ function renderBoard() {
 window.UI = {
   createRoomAndShowId: function () {
     createRoom().then(roomId => {
+      document.getElementById('roomIdInput').value = roomId;
       document.getElementById('roomInfo').innerText =
         `✅ 房间已创建，房间ID为：${roomId}，请复制此ID分享给对方`;
-      document.getElementById('roomIdInput').value = roomId; // 自动填入输入框
     }).catch(err => {
       document.getElementById('roomInfo').innerText = `❌ 创建失败: ${err.message}`;
     });
   },
 
-    joinRoomFromInput: function () {
-        const roomId = document.getElementById('roomIdInput').value.trim();
-        if (!roomId) {
-            alert("请输入房间ID");
-            return;
-        }
-        joinRoom(roomId).then(() => {
-            document.getElementById('roomInfo').innerText = `成功加入房间: ${roomId}`;
-        }).catch(err => {
-            document.getElementById('roomInfo').innerText = `加入失败: ${err.message}`;
-        });
+  joinRoomFromInput: function () {
+    const roomId = document.getElementById('roomIdInput').value.trim();
+    if (!roomId) {
+      alert('请输入房间ID');
+      return;
     }
+    joinRoom(roomId).then(() => {
+      document.getElementById('roomInfo').innerText =
+        `✅ 已成功加入房间：${roomId}`;
+    }).catch(err => {
+      document.getElementById('roomInfo').innerText =
+        `❌ 加入失败: ${err.message}`;
+    });
+  }
 };
