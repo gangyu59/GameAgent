@@ -1,87 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>围棋</title>
+  <meta charset="UTF-8">
+  <title>围棋</title>
 
-    <!-- 依赖库 -->
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <!-- PeerJS & Firebase -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <!-- 样式 -->
-    <link rel="stylesheet" href="css/style.css">
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h2 style="text-align:center;">围棋</h2>
+  <h2 style="text-align:center;">二人围棋</h2>
 
-    <!-- 房间控制 UI -->
-    <div style="text-align:center; margin-top:20px;">
+  <!-- 房间控制 UI -->
+  <div id="roomControls" style="text-align:center; margin-top:20px;">
+    <!-- 创建者视图 -->
+    <div id="hostControls" style="display:none;">
       <button onclick="window.UI.createRoomAndShowId()">创建房间</button>
-      <input id="roomIdInput" placeholder="输入房间ID" style="width:160px; margin-left:10px;" />
-      <button onclick="window.UI.joinRoomFromInput()">加入房间</button>
       <div id="roomInfo" style="margin-top:10px; color:blue;"></div>
     </div>
 
-    <!-- 棋盘区域 -->
-    <div id="board"></div>
-
-    <!-- 日志输出 -->
-    <div id="debug-panel" style="position:fixed; bottom:0; background:#f5f5f5; padding:10px; width:100%;">
-        <h3>调试信息</h3>
-        <div id="debug-log"></div>
+    <!-- 加入者视图 -->
+    <div id="guestControls" style="display:none;">
+      <input id="roomIdInput" placeholder="输入房间ID" style="width:180px;" />
+      <button onclick="window.UI.joinRoomFromInput()">加入房间</button>
+      <div id="roomInfo" style="margin-top:10px; color:blue;"></div>
     </div>
+  </div>
 
-    <!-- 控制台开关按钮 -->
-    <div id="mobile-console-toggle" onclick="toggleConsole()">调试台</div>
+  <!-- 棋盘区域 -->
+  <div id="board"></div>
 
-    <!-- 控制台本体 -->
-    <div id="mobile-console" style="display:none;">
-      <button onclick="document.getElementById('mobile-console').style.display='none'" style="float:right; background:#555; color:white; border:none;">关闭</button>
-      <div id="console-log"></div>
-    </div>
+  <!-- 调试面板 -->
+  <div id="debug-panel" style="position:fixed; bottom:0; background:#f5f5f5; padding:10px; width:100%;">
+    <h3>调试信息</h3>
+    <div id="debug-log"></div>
+  </div>
 
-    <!-- 所有 JS 模块按顺序加载 -->
-    <script src="js/firebase-init.js"></script>
-    <script src="js/webrtc-conn.js"></script>
-    <script src="js/game-logic.js"></script>
-    <script src="js/ui-render.js"></script>
-    <script src="js/utils.js"></script>
+  <!-- 移动端调试台 -->
+  <div id="mobile-console-toggle" onclick="toggleConsole()">调试台</div>
+  <div id="mobile-console" style="display:none;">
+    <button onclick="document.getElementById('mobile-console').style.display='none'"
+            style="float:right; background:#555; color:white; border:none;">关闭</button>
+    <div id="console-log"></div>
+  </div>
 
-    <!-- 控制台重定向 -->
-    <script>
-      const originalConsole = {...console};
-      window.console = {
-        log: (...args) => {
-          originalConsole.log(...args);
-          document.getElementById('console-log').innerHTML +=
-            `<div style="color:#0f0">${args.join(' ')}</div>`;
-        },
-        error: (...args) => {
-          originalConsole.error(...args);
-          document.getElementById('console-log').innerHTML +=
-            `<div style="color:#f00">${args.join(' ')}</div>`;
-        }
-      };
+  <!-- 模块 JS -->
+  <script src="js/firebase-init.js"></script>
+  <script src="js/webrtc-conn.js"></script>
+  <script src="js/game-logic.js"></script>
+  <script src="js/ui-render.js"></script>
+  <script src="js/utils.js"></script>
 
-      function toggleConsole() {
-        const panel = document.getElementById("mobile-console");
-        panel.style.display = panel.style.display === "none" ? "block" : "none";
+  <!-- 控制台重定向 -->
+  <script>
+    const originalConsole = { ...console };
+    window.console = {
+      log: (...args) => {
+        originalConsole.log(...args);
+        document.getElementById('console-log').innerHTML +=
+          `<div style="color:#0f0">${args.join(' ')}</div>`;
+      },
+      error: (...args) => {
+        originalConsole.error(...args);
+        document.getElementById('console-log').innerHTML +=
+          `<div style="color:#f00">${args.join(' ')}</div>`;
       }
-    </script>
+    };
+    function toggleConsole() {
+      const panel = document.getElementById("mobile-console");
+      panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+  </script>
 
-    <!-- 初始化逻辑 -->
-    <script>
-      window.game = {
-        players: [],
-        currentPlayer: 'black',
-        boardSize: 19
-      };
+  <!-- 初始化逻辑 -->
+  <script>
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
 
-      document.addEventListener('DOMContentLoaded', () => {
-        renderBoard();
-        console.log("系统启动完成");
-      });
-    </script>
+    window.game = {
+      players: [],
+      currentPlayer: 'black',
+      boardSize: 19
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderBoard();
+      console.log("系统启动完成");
+
+      const isHost = getQueryParam("host") === "1";
+      const room = getQueryParam("room");
+
+      if (isHost) {
+        document.getElementById('hostControls').style.display = 'block';
+      } else {
+        document.getElementById('guestControls').style.display = 'block';
+        if (room) {
+          document.getElementById('roomIdInput').value = room;
+        }
+      }
+    });
+  </script>
 </body>
 </html>
