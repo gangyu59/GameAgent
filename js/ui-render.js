@@ -29,9 +29,14 @@ window.UI = {
       alert("Peer 未初始化");
       return;
     }
+		
+		if (!window.db) {
+		  logDebug("❌ Firebase DB 未初始化", true);
+		  return;
+		}
 
     const roomId = window.peer.id;
-    const dbRef = firebase.database().ref(`rooms/${roomId}`);
+    const dbRef = window.db.ref(`rooms/${roomId}`);
     dbRef.set({
       createdAt: firebase.database.ServerValue.TIMESTAMP,
       creator: roomId,
@@ -46,7 +51,7 @@ window.UI = {
         <input value="${roomId}" readonly onclick="this.select()" style="font-size:18px; width:90%; margin-top:10px;" />
         <div style="margin-top:10px;">
           <input id="shareLink" value="${url}" readonly style="font-size:16px; width:90%;" />
-          <button onclick="navigator.clipboard.writeText('${url}')">📋 复制邀请链接</button>
+        <button onclick="copyInviteLink('${url}')" style="margin-top:5px;">📋 复制邀请链接</button>
         </div>
         <div style="font-size:14px; color:#555;">请将链接发送给你的对手</div>
       `;
@@ -73,6 +78,18 @@ window.UI = {
     });
   }
 };
+
+function copyInviteLink(text) {
+	  try {
+	    navigator.clipboard.writeText(text).then(() => {
+	      logDebug("✅ 邀请链接已复制");
+	    }).catch(err => {
+	      logDebug("⚠️ 复制失败，请手动复制", true);
+	    });
+	  } catch (err) {
+	    logDebug("⚠️ 不支持 clipboard API，请手动复制", true);
+	  }
+	};
 
 document.addEventListener("DOMContentLoaded", function () {
   window.peer = new Peer({
