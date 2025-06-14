@@ -19,10 +19,11 @@ function renderBoard() {
 window.UI = {
   createRoomAndShowId: function () {
     createRoom().then(roomId => {
+      const link = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
       document.getElementById('roomInfo').innerHTML =
-        `✅ 房间已创建！<br>房间ID：<b>${roomId}</b><br>
-         邀请链接：<input value="${window.location.origin + window.location.pathname}?room=${roomId}"
-         onclick="this.select()" style="width:80%;">`;
+        `✅ 房间已创建<br><strong>ID:</strong> ${roomId}<br>
+        <strong>邀请链接:</strong><br>
+        <input value="${link}" onclick="this.select()" style="width:80%;" />`;
       document.getElementById('roomIdInput').value = roomId;
     }).catch(err => {
       document.getElementById('roomInfo').innerText = `❌ 创建失败: ${err.message}`;
@@ -38,7 +39,7 @@ window.UI = {
 
     joinRoom(roomId).then(() => {
       document.getElementById('roomInfo').innerText =
-        `✅ 已成功加入房间：${roomId}`;
+        `✅ 成功加入房间：${roomId}`;
     }).catch(err => {
       document.getElementById('roomInfo').innerText =
         `❌ 加入失败: ${err.message}`;
