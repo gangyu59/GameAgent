@@ -10,18 +10,18 @@ document.addEventListener('DOMContentLoaded', function () {
     window.connections = {};
 
     // ✅ 正确连接 cloud PeerJS（必须传入 undefined 作为 id）
-    window.peer = new Peer(undefined, {
-        host: '0.peerjs.com',
-        port: 443,
-        path: '/',
-        secure: true,
-        config: {
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
-            ]
-        }
-    });
+window.peer = new Peer(undefined, {
+  host: 'peerjs.tokbox.com',   // 由 TokBox 提供的稳定 PeerJS 云服务
+  port: 443,
+  path: '/',
+  secure: true,
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
+    ]
+  }
+});
 
     // 增强错误处理
     peer.on('error', err => {
