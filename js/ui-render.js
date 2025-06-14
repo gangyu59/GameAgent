@@ -1,5 +1,14 @@
 // ui-render.js
 
+function logDebug(msg, isError = false) {
+  const el = document.getElementById("debug-log");
+  if (el) {
+    el.innerHTML += `<p style="color:${isError ? 'red' : 'green'}">${msg}</p>`;
+    el.scrollTop = el.scrollHeight;
+  }
+  console[isError ? "error" : "log"](msg);
+}
+
 function renderBoard() {
   const board = document.getElementById('board');
   for (let y = 0; y < 9; y++) {
@@ -16,6 +25,7 @@ function renderBoard() {
 window.UI = {
   createRoom: function () {
     if (!window.peer || !peer.id) {
+      logDebug("❌ Peer 未初始化", true);
       alert("Peer 未初始化");
       return;
     }
@@ -27,7 +37,8 @@ window.UI = {
       creator: roomId,
       status: 'waiting'
     }).then(() => {
-      const url = `${location.origin + location.pathname}?room=${roomId}`;
+      const url = `https://gangyu59.github.io/GameAgent/?room=${roomId}`;
+      logDebug(`✅ 房间创建成功：${roomId}`);
       document.getElementById('roomInfo').innerHTML = `
         <div style="color:green; font-size:18px;">
           ✅ 房间创建成功！你的房间号是：<strong>${roomId}</strong>
@@ -35,11 +46,12 @@ window.UI = {
         <input value="${roomId}" readonly onclick="this.select()" style="font-size:18px; width:90%; margin-top:10px;" />
         <div style="margin-top:10px;">
           <input id="shareLink" value="${url}" readonly style="font-size:16px; width:90%;" />
-          <button onclick="navigator.clipboard.writeText('${url}')" style="margin-top:5px;">📋 复制邀请链接</button>
+          <button onclick="navigator.clipboard.writeText('${url}')">📋 复制邀请链接</button>
         </div>
         <div style="font-size:14px; color:#555;">请将链接发送给你的对手</div>
       `;
     }).catch((err) => {
+      logDebug(`❌ 房间创建失败: ${err.message}`, true);
       document.getElementById('roomInfo').innerText = `❌ 房间创建失败: ${err.message}`;
     });
   },
@@ -51,10 +63,12 @@ window.UI = {
 
     const conn = peer.connect(roomId);
     conn.on("open", () => {
+      logDebug(`✅ 已连接到房间：${roomId}`);
       document.getElementById("roomInfo").innerText = `✅ 已连接到房间：${roomId}`;
     });
 
     conn.on("error", err => {
+      logDebug(`❌ 连接失败：${err.message}`, true);
       document.getElementById("roomInfo").innerText = `❌ 连接失败：${err.message}`;
     });
   }
@@ -69,11 +83,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   peer.on("open", function (id) {
-    console.log("✅ PeerJS 已连接，ID:", id);
+    logDebug(`✅ PeerJS 已连接，ID: ${id}`);
     window.myPeerId = id;
   });
 
   peer.on("error", function (err) {
-    console.error("❌ PeerJS 错误:", err);
+    logDebug(`❌ PeerJS 错误: ${err.message}`, true);
   });
 });
