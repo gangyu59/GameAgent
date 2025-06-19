@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>二人围棋</title>
+  <title>围棋</title>
 
   <!-- 依赖库 -->
   <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
@@ -11,83 +11,60 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h2 class="center">二人围棋</h2>
+  <h2 class="center">围棋</h2>
 
-  <!-- 房主视图 -->
-  <div id="hostView" class="center" style="display:none;">
-    <button class="btn" onclick="UI.createRoom()">创建房间</button>
-    <div id="roomInfo" class="info"></div>
+  <!-- 自动配对等待视图 -->
+  <div id="waitingView" class="center">
+    <p style="font-size: 18px;">🎯 正在寻找对手中...</p>
+    <p style="font-size: 14px;">
+      （我的 Peer ID: <span id="myPeerIdDisplay">...</span>）
+    </p>
   </div>
 
-  <!-- 访客视图 -->
-  <div id="guestView" class="center" style="display:none;">
-    <input id="roomIdInput" placeholder="输入房间ID" />
-    <button class="btn" onclick="UI.joinRoomFromInput()">加入房间</button>
-    <div id="roomInfo" class="info"></div>
-  </div>
-
+  <!-- 棋盘区域 -->
   <div id="board"></div>
 
+  <!-- 再来一局按钮 -->
+  <div class="restart-container">
+    <button id="restartBtn" onclick="restartGame()" style="display: none;">再来一局</button>
+  </div>
+
+  <!-- 结果展示 -->
+  <div id="resultBox" class="result-box" style="display: none;"></div>
+
+  <!-- 调试区域 -->
   <div id="debug-panel">
     <h3>调试信息</h3>
     <div id="debug-log"></div>
   </div>
 
-  <!-- 控制台 -->
+  <!-- 控制台浮窗 -->
   <div id="mobile-console-toggle" onclick="toggleConsole()">调试台</div>
   <div id="mobile-console" style="display:none;">
     <button onclick="document.getElementById('mobile-console').style.display='none'">关闭</button>
     <div id="console-log"></div>
   </div>
 
-  <!-- JS 加载 -->
+  <!-- 结束对局按钮 -->
+  <button id="endGameBtn" style="display:none;">结束对局</button>
+
+  <!-- 弹出式对局结束选择框 -->
+  <div id="endGameModal">
+    <div class="modal-content">
+      <p>两次连续不下子结束对局。</p>
+      <button class="btn-pass" onclick="handlePass()">放弃着手</button>
+      <button class="btn-resign" onclick="handleResign()">认输</button>
+      <button class="btn-cancel" onclick="closeEndGameModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- 模块 JS 加载顺序必须一致 -->
+  <script src="js/game-state.js"></script>
+	<script src="js/utils.js"></script>
   <script src="js/firebase-init.js"></script>
   <script src="js/webrtc-conn.js"></script>
   <script src="js/game-logic.js"></script>
   <script src="js/ui-render.js"></script>
-  <script src="js/utils.js"></script>
-
-  <script>
-    const originalConsole = {...console};
-    window.console = {
-      log: (...args) => {
-        originalConsole.log(...args);
-        document.getElementById('console-log').innerHTML += `<div style="color:#0f0">${args.join(' ')}</div>`;
-      },
-      error: (...args) => {
-        originalConsole.error(...args);
-        document.getElementById('console-log').innerHTML += `<div style="color:#f00">${args.join(' ')}</div>`;
-      }
-    };
-    function toggleConsole() {
-      const panel = document.getElementById("mobile-console");
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    }
-
-    function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-
-    window.game = {
-      players: [],
-      currentPlayer: 'black',
-      boardSize: 9
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      renderBoard();
-      const room = getQueryParam("room");
-
-      if (room) {
-        document.getElementById('guestView').style.display = 'block';
-        document.getElementById('roomIdInput').value = room;
-      } else {
-        document.getElementById('hostView').style.display = 'block';
-      }
-
-      console.log("系统启动完成");
-    });
-  </script>
+  <script src="js/main.js"></script>
 </body>
 </html>
