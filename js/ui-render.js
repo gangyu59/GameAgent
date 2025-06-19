@@ -1,12 +1,12 @@
 //ui-render.js
 
-// 保留原有函数
 function renderBoard() {
   const boardContainer = document.getElementById("board");
   boardContainer.innerHTML = "";
-	
-	logDebug("开始渲染棋盘");
+  
+  logDebug("开始渲染棋盘");
   logDebug(`棋盘尺寸: ${window.game.boardSize}x${window.game.boardSize}`);
+  logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
 
   for (let y = 0; y < window.game.boardSize; y++) {
     for (let x = 0; x < window.game.boardSize; x++) {
@@ -15,17 +15,20 @@ function renderBoard() {
       cell.id = `cell-${x}-${y}`;
 
       cell.addEventListener("click", () => {
-        // 修复：使用 game.playerColor 而不是 myColor
-				
-				  logDebug(`点击位置: (${x},${y})`);
-			    logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
-					
-        if (window.game.currentPlayer !== window.game.playerColor) 
-				{
-		      logDebug("⛔ 禁止落子：不是您的回合", true);
-		      return;
-		    };
-        placeStone(x, y); // game-logic 会检查合法性并广播
+        logDebug(`--- 点击事件开始 ---`);
+        logDebug(`点击位置: (${x},${y})`);
+        logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
+        logDebug(`棋盘状态: ${JSON.stringify(window.game.board[y][x])}`);
+        
+        if (window.game.currentPlayer !== window.game.playerColor) {
+          logDebug("⛔ 禁止落子：不是您的回合", true);
+          logDebug(`--- 点击事件结束 (回合不符) ---`);
+          return;
+        }
+        
+        logDebug("✅ 回合验证通过，尝试落子");
+        placeStone(x, y);
+        logDebug(`--- 点击事件结束 ---`);
       });
 
       boardContainer.appendChild(cell);
@@ -35,22 +38,36 @@ function renderBoard() {
   updateBoardUI();
 }
 
-// 修复：使用全局 game 对象
 function updateBoardUI() {
+  logDebug("开始更新棋盘UI");
   const board = window.game.board;
+  let updateCount = 0;
+  
   for (let y = 0; y < board.length; y++) {
     for (let x = 0; x < board.length; x++) {
       const cell = document.getElementById(`cell-${x}-${y}`);
+      if (!cell) {
+        logDebug(`⚠️ 找不到单元格: cell-${x}-${y}`, true);
+        continue;
+      }
+      
       const value = board[y][x];
+      let newHTML = "";
+      
       if (value === 1) {
-        cell.innerHTML = `<div class="black-stone"></div>`;
+        newHTML = `<div class="black-stone"></div>`;
       } else if (value === 2) {
-        cell.innerHTML = `<div class="white-stone"></div>`;
-      } else {
-        cell.innerHTML = "";
+        newHTML = `<div class="white-stone"></div>`;
+      }
+      
+      if (cell.innerHTML !== newHTML) {
+        cell.innerHTML = newHTML;
+        updateCount++;
       }
     }
   }
+  
+  logDebug(`✅ 棋盘UI更新完成，共更新 ${updateCount} 处`);
 }
 
 // 修复：添加缺失的函数声明
