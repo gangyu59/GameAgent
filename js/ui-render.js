@@ -1,37 +1,47 @@
 //ui-render.js
 
 function renderBoard() {
-  const boardContainer = document.getElementById("board");
-  boardContainer.innerHTML = "";
-  
-  logDebug("开始渲染棋盘");
-  logDebug(`棋盘尺寸: ${window.game.boardSize}x${window.game.boardSize}`);
-  logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
+  const board = document.getElementById('board');
+  board.innerHTML = '';
 
-  for (let y = 0; y < window.game.boardSize; y++) {
-    for (let x = 0; x < window.game.boardSize; x++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.id = `cell-${x}-${y}`;
+  const size = 9;
+  const cellSize = 44;
+  const offset = cellSize; // 交叉点之间的距离
 
-      cell.addEventListener("click", () => {
-        logDebug(`--- 点击事件开始 ---`);
-        logDebug(`点击位置: (${x},${y})`);
-        logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
-        logDebug(`棋盘状态: ${JSON.stringify(window.game.board[y][x])}`);
-        
-        if (window.game.currentPlayer !== window.game.playerColor) {
-          logDebug("⛔ 禁止落子：不是您的回合", true);
-          logDebug(`--- 点击事件结束 (回合不符) ---`);
-          return;
-        }
-        
-        logDebug("✅ 回合验证通过，尝试落子");
-        placeStone(x, y);
-        logDebug(`--- 点击事件结束 ---`);
-      });
+  const starPoints = [
+    [2, 2], [6, 2],
+    [2, 6], [6, 6],
+    [4, 4]
+  ];
 
-      boardContainer.appendChild(cell);
+  // 创建交叉点（可落子点）
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const intersection = document.createElement('div');
+      intersection.className = 'intersection';
+      intersection.dataset.x = x;
+      intersection.dataset.y = y;
+      intersection.style.left = `${x * offset}px`;
+      intersection.style.top = `${y * offset}px`;
+
+      if (starPoints.some(([sx, sy]) => sx === x && sy === y)) {
+        const star = document.createElement('div');
+        star.className = 'star-point';
+        intersection.appendChild(star);
+      }
+
+			intersection.addEventListener('click', () => {
+			  console.log(`🔘 被点击: (${x}, ${y})`);
+			  if (window.game.currentPlayer === window.game.playerColor) {
+			    console.log("✅ 是你的回合，尝试落子");
+			    placeStone(x, y);
+			    if (window.sendMove) window.sendMove({ x, y });
+			  } else {
+			    console.log("⛔ 不是你的回合，忽略点击");
+			  }
+			});
+
+      board.appendChild(intersection);
     }
   }
 
@@ -39,35 +49,37 @@ function renderBoard() {
 }
 
 function updateBoardUI() {
-  logDebug("开始更新棋盘UI");
+  console.log("🎨 开始渲染棋盘 UI");
+
+  // 清除旧棋子
+  const oldStones = document.querySelectorAll('.stone');
+  console.log(`🧹 清除旧棋子数量: ${oldStones.length}`);
+  oldStones.forEach(el => el.remove());
+
+  // 渲染新棋子
   const board = window.game.board;
-  let updateCount = 0;
-  
   for (let y = 0; y < board.length; y++) {
-    for (let x = 0; x < board.length; x++) {
-      const cell = document.getElementById(`cell-${x}-${y}`);
-      if (!cell) {
-        logDebug(`⚠️ 找不到单元格: cell-${x}-${y}`, true);
-        continue;
-      }
-      
-      const value = board[y][x];
-      let newHTML = "";
-      
-      if (value === 1) {
-        newHTML = `<div class="black-stone"></div>`;
-      } else if (value === 2) {
-        newHTML = `<div class="white-stone"></div>`;
-      }
-      
-      if (cell.innerHTML !== newHTML) {
-        cell.innerHTML = newHTML;
-        updateCount++;
+    for (let x = 0; x < board[y].length; x++) {
+      const val = board[y][x];
+      if (val === 1 || val === 2) {
+        console.log(`🧱 棋盘上有${val === 1 ? '黑' : '白'}子 at (${x}, ${y})`);
+
+        const stone = document.createElement('div');
+        stone.className = 'stone';
+        stone.classList.add(val === 1 ? 'black-stone' : 'white-stone');
+
+        const intersection = document.querySelector(`.intersection[data-x="${x}"][data-y="${y}"]`);
+        if (intersection) {
+          intersection.appendChild(stone);
+          console.log(`✅ 成功插入棋子 at (${x}, ${y})`);
+        } else {
+          console.warn(`❌ 没有找到 intersection(${x}, ${y})`);
+        }
       }
     }
   }
-  
-  logDebug(`✅ 棋盘UI更新完成，共更新 ${updateCount} 处`);
+
+  console.log("✅ 棋盘 UI 渲染完成");
 }
 
 // 修复：添加缺失的函数声明

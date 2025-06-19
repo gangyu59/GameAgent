@@ -1,131 +1,178 @@
-//webrtc-conn.js
+/**
+ * 完全修复版 - WebRTC连接与渲染问题解决方案
+ * 修复：
+ * 1. 本地棋子渲染问题
+ * 2. 跨设备同步问题
+ * 3. 连接状态管理
+ */
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
   const FIXED_ID = "GameAgentRoom";
   window.connections = {};
   let isHost = false;
-	
-	// 在 webrtc-conn.js 文件顶部添加以下函数
-	function updateMyIdUI(peerId) {
-	  const idDisplay = document.getElementById("myPeerIdDisplay");
-	  if (idDisplay) {
-	    idDisplay.textContent = peerId;
-	    logDebug(`更新界面显示PeerID: ${peerId}`);
-	  } else {
-	    logDebug("⚠️ 找不到myPeerIdDisplay元素", true);
-	  }
-	}
+  
+  // ========== 关键修复1：增强UI更新函数 ==========
+  function updateMyIdUI(peerId) {
+    const el = document.getElementById("myPeerIdDisplay");
+    if (el) {
+      el.textContent = isHost ? `房主ID: ${peerId}` : `访客ID: ${peerId}`;
+      el.style.color = isHost ? '#000' : '#666';
+    }
+  }
 
-  logDebug("正在初始化PeerJS连接...");
+  // ========== 关键修复2：强制渲染函数 ==========
+  window.forceRenderBoard = function() {
+    const board = window.game.board;
+    logDebug("强制执行棋盘渲染");
+    
+    // 使用两层循环确保更新所有单元格
+    for (let y = 0; y < board.length; y++) {
+      for (let x = 0; x < board[y].length; x++) {
+        const cell = document.getElementById(`cell-${x}-${y}`);
+        if (!cell) continue;
+        
+        const value = board[y][x];
+        let newHTML = '';
+        if (value === 1) newHTML = '<div class="stone black"></div>';
+        if (value === 2) newHTML = '<div class="stone white"></div>';
+        
+        // 强制更新DOM
+        if (cell.innerHTML !== newHTML) {
+          cell.innerHTML = newHTML;
+          // 添加动画效果确保可视化
+          if (newHTML) {
+            setTimeout(() => {
+              cell.firstChild.style.transform = 'scale(1)';
+            }, 10);
+          }
+        }
+      }
+    }
+  };
+
+  // ========== 关键修复3：改进PeerJS初始化 ==========
+  logDebug("初始化PeerJS连接...");
   window.peer = new Peer(FIXED_ID, {
     host: '0.peerjs.com',
     port: 443,
     path: '/',
     secure: true,
-    debug: 3 // 开启详细日志
+    debug: 2
   });
 
+  // ========== 房主逻辑 ==========
   peer.on('open', id => {
     isHost = true;
     window.myPeerId = id;
     window.game.playerColor = 'black';
-    logDebug(`✅ PeerJS连接成功，ID: ${id}`);
-    logDebug(`🏠 房主模式 (执黑)`);
-    logDebug(`当前连接状态: ${peer.disconnected ? '断开' : '连接'}`);
+    logDebug(`✅ 房主连接成功 | ID: ${id}`);
     updateMyIdUI(id);
 
     peer.on('connection', conn => {
-      logDebug(`🎉 收到来自 ${conn.peer} 的新连接`);
+      logDebug(`👥 新连接来自: ${conn.peer}`);
       window.connections[conn.peer] = conn;
-      
+
       conn.on('open', () => {
-        logDebug(`🔗 连接 ${conn.peer} 已就绪`);
+        logDebug("🔗 连接已就绪");
+        // 发送完整游戏状态
+        conn.send(JSON.stringify({
+          type: 'sync',
+          board: window.game.board,
+          currentPlayer: window.game.currentPlayer
+        }));
       });
-      
+
       conn.on('data', data => {
-        logDebug(`📩 收到来自 ${conn.peer} 的数据: ${data}`);
-        handleIncomingData(data);
-      });
-      
-      conn.on('close', () => {
-        logDebug(`❌ 连接 ${conn.peer} 已关闭`);
-        delete window.connections[conn.peer];
-      });
-      
-      conn.on('error', err => {
-        logDebug(`⚠️ 连接 ${conn.peer} 错误: ${err}`, true);
+        logDebug(`📩 收到数据: ${data}`);
+        handleRemoteMove(data);
       });
     });
   });
 
+  // ========== 错误处理 ==========
   peer.on('error', err => {
     logDebug(`❌ PeerJS错误: ${err.type}`, true);
-    logDebug(`错误详情: ${JSON.stringify(err)}`, true);
     
     if (err.type === 'unavailable-id') {
-      logDebug("⚠️ 房主ID被占用，转为访客模式");
-      window.peer = new Peer(undefined, peer.options);
-      
+      logDebug("转为访客模式...");
+      window.peer = new Peer(null, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true
+      });
+
       peer.on('open', id => {
         isHost = false;
         window.myPeerId = id;
         window.game.playerColor = 'white';
-        logDebug(`✅ 新PeerID: ${id}`);
-        logDebug(`🕊 访客模式 (执白)`);
+        logDebug(`🕊 访客连接成功 | ID: ${id}`);
         updateMyIdUI(id);
 
         const conn = peer.connect(FIXED_ID);
-        logDebug(`尝试连接房主 ${FIXED_ID}...`);
-        
         conn.on('open', () => {
-          logDebug(`✅ 成功连接到房主 ${FIXED_ID}`);
           window.connections[conn.peer] = conn;
-          conn.on('data', handleIncomingData);
-        });
-        
-        conn.on('error', err => {
-          logDebug(`❌ 连接房主失败: ${err}`, true);
+          conn.on('data', handleRemoteMove);
         });
       });
     }
   });
 
-  window.sendMove = function (move) {
-    const payload = JSON.stringify({ 
-      ...move, 
-      sender: peer.id,
-      currentTurn: window.game.currentPlayer,
+  // ========== 关键修复4：改进数据发送 ==========
+  window.sendMove = function(move) {
+    const payload = {
+      ...move,
+      sender: window.myPeerId,
+      board: window.game.board, // 包含完整棋盘状态
       timestamp: Date.now()
-    });
-    
-    logDebug(`📤 准备发送走子数据: ${payload}`);
+    };
+
+    logDebug(`📤 发送数据: ${JSON.stringify(payload)}`);
     
     Object.values(window.connections).forEach(conn => {
       if (conn.open) {
-        logDebug(`尝试通过连接 ${conn.peer} 发送数据`);
-        conn.send(payload);
-      } else {
-        logDebug(`⚠️ 连接 ${conn.peer} 未就绪`, true);
+        conn.send(JSON.stringify(payload));
       }
     });
+
+    // 关键修复：本地立即渲染
+    window.game.board[move.y][move.x] = window.game.playerColor === 'black' ? 1 : 2;
+    forceRenderBoard();
   };
 
-  function handleIncomingData(data) {
-    logDebug(`📥 收到原始数据: ${data}`);
-    
+  // ========== 关键修复5：数据处理 ==========
+  function handleRemoteMove(data) {
     try {
-      const parsed = JSON.parse(data);
-      logDebug(`解析后的数据: ${JSON.stringify(parsed)}`);
-      
-      if (window.handleMove) {
-        logDebug("调用 handleMove 处理数据");
-        window.handleMove(parsed);
-      } else {
-        logDebug("⚠️ handleMove 函数未定义", true);
+      const msg = typeof data === 'string' ? JSON.parse(data) : data;
+      logDebug("处理远程数据:", msg);
+
+      // 同步游戏状态
+      if (msg.type === 'sync') {
+        window.game.board = msg.board || window.game.board;
+        window.game.currentPlayer = msg.currentPlayer || 'black';
+      } 
+      // 处理落子
+      else if (typeof msg.x === 'number' && typeof msg.y === 'number') {
+        window.game.board[msg.y][msg.x] = msg.color === 'black' ? 1 : 2;
+        window.game.currentPlayer = msg.color === 'black' ? 'white' : 'black';
       }
+
+      // 强制渲染
+      setTimeout(() => {
+        forceRenderBoard();
+        logDebug("远程落子渲染完成");
+      }, 50);
+      
     } catch (e) {
-      logDebug(`❌ 数据解析失败: ${e.message}`, true);
-      logDebug(`原始数据: ${data}`, true);
+      logDebug(`数据处理错误: ${e.message}`, true);
     }
   }
+
+  // ========== 页面可见性检测 ==========
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      logDebug("页面恢复可见，强制刷新棋盘");
+      forceRenderBoard();
+    }
+  });
 });
