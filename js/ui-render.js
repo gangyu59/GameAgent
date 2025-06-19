@@ -4,6 +4,9 @@
 function renderBoard() {
   const boardContainer = document.getElementById("board");
   boardContainer.innerHTML = "";
+	
+	logDebug("开始渲染棋盘");
+  logDebug(`棋盘尺寸: ${window.game.boardSize}x${window.game.boardSize}`);
 
   for (let y = 0; y < window.game.boardSize; y++) {
     for (let x = 0; x < window.game.boardSize; x++) {
@@ -13,7 +16,15 @@ function renderBoard() {
 
       cell.addEventListener("click", () => {
         // 修复：使用 game.playerColor 而不是 myColor
-        if (window.game.currentPlayer !== window.game.playerColor) return;
+				
+				  logDebug(`点击位置: (${x},${y})`);
+			    logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
+					
+        if (window.game.currentPlayer !== window.game.playerColor) 
+				{
+		      logDebug("⛔ 禁止落子：不是您的回合", true);
+		      return;
+		    };
         placeStone(x, y); // game-logic 会检查合法性并广播
       });
 

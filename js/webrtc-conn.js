@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateMyIdUI(id);
 
     peer.on('connection', conn => {
+			logDebug("🎉 连接建立成功");
       window.connections[conn.peer] = conn;
       conn.on('data', handleIncomingData);
       conn.on('close', () => delete window.connections[conn.peer]);
@@ -65,6 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ✅ 发送走子
   window.sendMove = function (move) {
+		
+		logDebug(`发送走子数据: ${JSON.stringify(move)}`);
+		
     const payload = JSON.stringify({ ...move, sender: peer.id });
     Object.values(window.connections).forEach(conn => {
       if (conn.open) conn.send(payload);
@@ -73,6 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ✅ 接收走子
   function handleIncomingData(data) {
+		
+		logDebug(`收到数据: ${data}`);
+		
     try {
       const parsed = JSON.parse(data);
       if (window.handleMove) window.handleMove(parsed);

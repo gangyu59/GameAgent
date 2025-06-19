@@ -1,26 +1,46 @@
 // game-logic.js
 
-// ✅ 落子核心逻辑
+// ✅ 落子核心逻辑（完整保留原有规则）
 function placeStone(x, y) {
-  const board = window.game.board;
-  const color = window.game.currentPlayer === 'black' ? 1 : 2;
+  logDebug(`尝试落子: (${x},${y})`);
+  logDebug(`当前棋盘状态: ${JSON.stringify(window.game.board)}`);
+  logDebug(`当前回合: ${window.game.currentPlayer}, 我的颜色: ${window.game.playerColor}`);
   
-  // 检查是否轮到此玩家
+  // 检查是否轮到此玩家（使用playerColor）
   if (window.game.playerColor !== window.game.currentPlayer) {
     logDebug("⛔ 还没轮到你落子", true);
     return;
   }
   
+  const board = window.game.board;
+  const color = window.game.currentPlayer === 'black' ? 1 : 2;
+  const opponentColor = color === 1 ? 2 : 1;
+  
   // 检查位置是否为空
-  if (board[y][x] !== 0) return;
+  if (board[y][x] !== 0) {
+    logDebug("🚫 位置已有棋子", true);
+    return;
+  }
   
   // 创建棋盘副本
   const newBoard = board.map(row => [...row]);
   newBoard[y][x] = color;
   
   // 检查自杀规则
-  const liberties = checkLiberties(x, y, newBoard);
-  if (liberties === 0) {
+  let captured = false;
+  for (const [nx, ny] of getNeighbors(x, y)) {
+    if (newBoard[ny]?.[nx] === opponentColor) {
+      const group = getConnectedGroup(nx, ny, newBoard);
+      if (getLiberties(group, newBoard) === 0) {
+        group.forEach(([gx, gy]) => newBoard[gy][gx] = 0);
+        captured = true;
+      }
+    }
+  }
+  
+  // 检查自身是否存活
+  const selfGroup = getConnectedGroup(x, y, newBoard);
+  if (getLiberties(selfGroup, newBoard) === 0 && !captured) {
     logDebug("🚫 禁止自杀", true);
     return;
   }
@@ -32,22 +52,48 @@ function placeStone(x, y) {
     return;
   }
   
-  // 提子逻辑
-  removeCapturedStones(x, y, newBoard);
-  
   // 更新游戏状态
   window.game.previousBoard = JSON.stringify(board);
   window.game.board = newBoard;
   window.game.passCount = 0;
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
   
+  logDebug(`✅ 落子成功: (${x},${y})`);
+  logDebug(`新棋盘状态: ${JSON.stringify(newBoard)}`);
+  
   // 更新UI
   updateBoardUI();
   
   // 发送移动数据
   if (window.sendMove) {
-    window.sendMove({ x, y });
+    window.sendMove({ x, y, sender: window.myPeerId });
   }
+}
+
+// ✅ 更新棋盘UI（修复显示问题）
+function updateBoardUI() {
+  const board = window.game.board;
+  let updated = false;
+  
+  for (let y = 0; y < board.length; y++) {
+    for (let x = 0; x < board[y].length; x++) {
+      const cell = document.getElementById(`cell-${x}-${y}`);
+      if (!cell) continue;
+      
+      const value = board[y][x];
+      if (value === 1) {
+        cell.innerHTML = `<div class="black-stone"></div>`;
+        updated = true;
+      } else if (value === 2) {
+        cell.innerHTML = `<div class="white-stone"></div>`;
+        updated = true;
+      } else {
+        cell.innerHTML = "";
+      }
+    }
+  }
+  
+  if (updated) logDebug("✅ 棋盘UI更新完成");
 }
 
 // ✅ 检查棋子气数
