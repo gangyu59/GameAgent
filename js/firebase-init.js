@@ -18,7 +18,7 @@
 
     try {
         // 初始化核心
-        const app = firebase.initializeApp(config, "GameAgentMain");
+        const app = firebase.initializeApp(config);
         window.db = app.database();
         
         // 调试输出
