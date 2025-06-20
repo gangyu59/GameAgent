@@ -1,53 +1,54 @@
 //ui-render.js
 
-// 保留原有函数
 function renderBoard() {
-  const boardContainer = document.getElementById("board");
-  boardContainer.innerHTML = "";
-	
-	logDebug("开始渲染棋盘");
-  logDebug(`棋盘尺寸: ${window.game.boardSize}x${window.game.boardSize}`);
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  const size = 9;
+  const cellSize = 66;
+  const starPoints = [[2,2],[6,2],[2,6],[6,6],[4,4]];
 
-  for (let y = 0; y < window.game.boardSize; y++) {
-    for (let x = 0; x < window.game.boardSize; x++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.id = `cell-${x}-${y}`;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const intersection = document.createElement('div');
+      intersection.className = 'intersection';
+      intersection.dataset.x = x;
+      intersection.dataset.y = y;
 
-      cell.addEventListener("click", () => {
-        // 修复：使用 game.playerColor 而不是 myColor
-				
-				  logDebug(`点击位置: (${x},${y})`);
-			    logDebug(`当前玩家颜色: ${window.game.playerColor}, 回合: ${window.game.currentPlayer}`);
-					
-        if (window.game.currentPlayer !== window.game.playerColor) 
-				{
-		      logDebug("⛔ 禁止落子：不是您的回合", true);
-		      return;
-		    };
-        placeStone(x, y); // game-logic 会检查合法性并广播
+      intersection.style.left = `${x * cellSize}px`;
+      intersection.style.top = `${y * cellSize}px`;
+
+      if (starPoints.some(([sx, sy]) => sx === x && sy === y)) {
+        const star = document.createElement('div');
+        star.className = 'star-point';
+        intersection.appendChild(star);
+      }
+
+      intersection.addEventListener('click', () => {
+        if (window.game.currentPlayer === window.game.playerColor) {
+          placeStone(x, y);
+          if (window.sendMove) window.sendMove({ x, y });
+        }
       });
 
-      boardContainer.appendChild(cell);
+      board.appendChild(intersection);
     }
   }
 
   updateBoardUI();
 }
 
-// 修复：使用全局 game 对象
 function updateBoardUI() {
+  document.querySelectorAll('.stone').forEach(el => el.remove());
   const board = window.game.board;
   for (let y = 0; y < board.length; y++) {
-    for (let x = 0; x < board.length; x++) {
-      const cell = document.getElementById(`cell-${x}-${y}`);
-      const value = board[y][x];
-      if (value === 1) {
-        cell.innerHTML = `<div class="black-stone"></div>`;
-      } else if (value === 2) {
-        cell.innerHTML = `<div class="white-stone"></div>`;
-      } else {
-        cell.innerHTML = "";
+    for (let x = 0; x < board[y].length; x++) {
+      const val = board[y][x];
+      if (val === 1 || val === 2) {
+        const stone = document.createElement('div');
+        stone.className = 'stone ' + (val === 1 ? 'black-stone' : 'white-stone');
+
+        const intersection = document.querySelector(`.intersection[data-x="${x}"][data-y="${y}"]`);
+        if (intersection) intersection.appendChild(stone);
       }
     }
   }
