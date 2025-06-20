@@ -23,17 +23,19 @@ function initGame(boardSize = 9) {
 }
 
 // 核心落子逻辑
-function placeStone(x, y) {
-  logDebug(`\n===== 开始处理落子 (${x},${y}) =====`);
+function placeStone(x, y, isRemote = false) {
+  logDebug(`\n===== ${isRemote ? '远程' : '本地'}落子 (${x},${y}) =====`);
   logDebug(`当前回合: ${window.game.currentPlayer}`);
   logDebug(`玩家颜色: ${window.game.playerColor}`);
   
-  // 1. 回合验证
-  if (window.game.playerColor !== window.game.currentPlayer) {
+  // ✅ 只本地落子时验证回合
+  if (!isRemote && window.game.playerColor !== window.game.currentPlayer) {
     logDebug("⛔ 失败: 不是你的回合", true);
     return false;
   }
 
+  // ✅ 以下逻辑全部保持你原样不动 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+  
   // 2. 位置有效性检查
   if (!isValidPosition(x, y)) {
     logDebug(`⛔ 无效位置: (${x},${y})`, true);
@@ -49,7 +51,6 @@ function placeStone(x, y) {
   const opponentColor = color === 1 ? 2 : 1;
   let capturedGroups = [];
   
-  // 检查相邻位置的对手棋子
   for (const [nx, ny] of getNeighbors(x, y)) {
     if (newBoard[ny][nx] === opponentColor) {
       const group = findGroup(nx, ny, newBoard);
@@ -107,9 +108,11 @@ function placeStone(x, y) {
   logDebug(`提子统计 - 黑:${window.game.capturedStones.black} 白:${window.game.capturedStones.white}`);
   logDebug(`最新棋盘:\n${formatBoardForDebug(newBoard)}`);
 
-  // 10. 更新UI并发送数据
+  // 10. 更新UI
   updateBoardUI();
-  if (window.sendMove) {
+
+  // ✅ 只本地落子时才发送网络同步
+  if (!isRemote && window.sendMove) {
     window.sendMove({
       x,
       y,

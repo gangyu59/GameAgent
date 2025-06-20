@@ -119,54 +119,46 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ========== 关键修复4：改进数据发送 ==========
-  window.sendMove = function(move) {
-    const payload = {
-      ...move,
-      sender: window.myPeerId,
-      board: window.game.board, // 包含完整棋盘状态
-      timestamp: Date.now()
-    };
-
-    logDebug(`📤 发送数据: ${JSON.stringify(payload)}`);
-    
-    Object.values(window.connections).forEach(conn => {
-      if (conn.open) {
-        conn.send(JSON.stringify(payload));
-      }
-    });
-
-    // 关键修复：本地立即渲染
-    window.game.board[move.y][move.x] = window.game.playerColor === 'black' ? 1 : 2;
-    forceRenderBoard();
-  };
+	window.sendMove = function(move) {
+	  const payload = {
+	    ...move,
+	    sender: window.myPeerId,
+	    board: window.game.board,
+	    timestamp: Date.now()
+	  };
+	
+	  logDebug(`📤 本地发送落子数据: ${JSON.stringify(payload)}`);
+	
+	  Object.values(window.connections || {}).forEach(conn => {
+	    if (conn.open) {
+	      conn.send(JSON.stringify(payload));
+	    }
+	  });
+	};
 
   // ========== 关键修复5：数据处理 ==========
-  function handleRemoteMove(data) {
-    try {
-      const msg = typeof data === 'string' ? JSON.parse(data) : data;
-      logDebug("处理远程数据:", msg);
-
-      // 同步游戏状态
-      if (msg.type === 'sync') {
-        window.game.board = msg.board || window.game.board;
-        window.game.currentPlayer = msg.currentPlayer || 'black';
-      } 
-      // 处理落子
-      else if (typeof msg.x === 'number' && typeof msg.y === 'number') {
-        window.game.board[msg.y][msg.x] = msg.color === 'black' ? 1 : 2;
-        window.game.currentPlayer = msg.color === 'black' ? 'white' : 'black';
-      }
-
-      // 强制渲染
-      setTimeout(() => {
-        forceRenderBoard();
-        logDebug("远程落子渲染完成");
-      }, 50);
-      
-    } catch (e) {
-      logDebug(`数据处理错误: ${e.message}`, true);
-    }
-  }
+	function handleRemoteMove(data) {
+	  try {
+	    const msg = typeof data === 'string' ? JSON.parse(data) : data;
+	    logDebug(`📩 接收到远程数据: ${JSON.stringify(msg)}`);
+	
+	    if (msg.type === 'sync') {
+	      logDebug("🔄 执行同步数据");
+	      window.game.board = msg.board || window.game.board;
+	      window.game.currentPlayer = msg.currentPlayer || 'black';
+	      updateBoardUI(); // 重新绘制
+	      return;
+	    }
+	
+	    if (typeof msg.x === 'number' && typeof msg.y === 'number') {
+	      logDebug("🎯 远程落子请求，调用 placeStone()");
+	      placeStone(msg.x, msg.y, true);  // ✅ 远程落子
+	    }
+	
+	  } catch (e) {
+	    logDebug(`❌ 数据解析错误: ${e.message}`, true);
+	  }
+	}
 
   // ========== 页面可见性检测 ==========
   document.addEventListener('visibilitychange', () => {
