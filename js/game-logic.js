@@ -109,6 +109,7 @@ function placeStone(x, y, isRemote = false) {
   logDebug(`最新棋盘:\n${formatBoardForDebug(newBoard)}`);
 
   // 10. 更新UI
+	startTimer(window.game.currentPlayer); // 切换计时器
   updateBoardUI();
 
   // ✅ 只本地落子时才发送网络同步
@@ -122,6 +123,8 @@ function placeStone(x, y, isRemote = false) {
     });
   }
 
+	window.lastMove = { x, y };
+	
   // 11. 终局检查
   checkGameEnd();
   return true;

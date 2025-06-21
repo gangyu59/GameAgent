@@ -37,15 +37,25 @@ function renderBoard() {
   updateBoardUI();
 }
 
+let lastMove = window.lastMove || null;
+
 function updateBoardUI() {
   document.querySelectorAll('.stone').forEach(el => el.remove());
   const board = window.game.board;
+
   for (let y = 0; y < board.length; y++) {
     for (let x = 0; x < board[y].length; x++) {
       const val = board[y][x];
       if (val === 1 || val === 2) {
         const stone = document.createElement('div');
         stone.className = 'stone ' + (val === 1 ? 'black-stone' : 'white-stone');
+
+        // ✅ 如果是最后一手棋，加红点
+        if (lastMove && lastMove.x === x && lastMove.y === y) {
+          const dot = document.createElement('div');
+          dot.className = 'red-dot';
+          stone.appendChild(dot);
+        }
 
         const intersection = document.querySelector(`.intersection[data-x="${x}"][data-y="${y}"]`);
         if (intersection) intersection.appendChild(stone);
@@ -88,4 +98,21 @@ function handleResign() {
 
 function switchPlayer() {
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
+}
+
+function drawStone(ctx, x, y, color, highlight = false) {
+  const radius = 12;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI);
+  ctx.fillStyle = color === 'black' ? '#000' : '#fff';
+  ctx.fill();
+  ctx.stroke();
+
+  // 红点高亮
+  if (highlight) {
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+  }
 }

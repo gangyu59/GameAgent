@@ -80,3 +80,57 @@ window.logDebug = function(msg, isError = false) {
   }
   console[isError ? "error" : "log"](msg);
 };
+
+
+let timerHandles = {
+  black: null,
+  white: null
+};
+
+let remainingTime = {
+  black: 3600, // 秒
+  white: 3600
+};
+
+function formatTime(seconds) {
+  const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const sec = String(seconds % 60).padStart(2, '0');
+  return `${min}:${sec}`;
+}
+
+/**
+ * 启动倒计时
+ * @param {'black'|'white'} playerColor 当前执棋方
+ */
+window.startTimer = function(playerColor) {
+  const opponent = playerColor === 'black' ? 'white' : 'black';
+
+  // 停止对方的定时器
+  if (timerHandles[opponent]) {
+    clearInterval(timerHandles[opponent]);
+    timerHandles[opponent] = null;
+    document.getElementById(`${opponent}-timer`).classList.remove('active');
+  }
+
+  // 启动当前玩家计时
+  const label = document.getElementById(`${playerColor}-timer`);
+  if (!label) return;
+
+  document.getElementById(`${playerColor}-timer`).classList.add('active');
+
+  if (timerHandles[playerColor]) {
+    clearInterval(timerHandles[playerColor]);
+  }
+
+  timerHandles[playerColor] = setInterval(() => {
+    if (remainingTime[playerColor] <= 0) {
+      clearInterval(timerHandles[playerColor]);
+      timerHandles[playerColor] = null;
+      alert(`⏰ ${playerColor === 'black' ? '黑方' : '白方'}时间到！`);
+      return;
+    }
+
+    remainingTime[playerColor]--;
+    label.textContent = formatTime(remainingTime[playerColor]);
+  }, 1000);
+};
