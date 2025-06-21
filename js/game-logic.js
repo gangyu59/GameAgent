@@ -110,6 +110,7 @@ function placeStone(x, y, isRemote = false) {
 
   // 10. 更新UI
 	startTimer(window.game.currentPlayer); // 切换计时器
+	window.lastMove = { x, y };
   updateBoardUI();
 
   // ✅ 只本地落子时才发送网络同步
@@ -122,8 +123,6 @@ function placeStone(x, y, isRemote = false) {
       captured: capturedStones.length
     });
   }
-
-	window.lastMove = { x, y };
 	
   // 11. 终局检查
   checkGameEnd();
