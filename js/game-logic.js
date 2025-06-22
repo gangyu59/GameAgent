@@ -150,9 +150,8 @@ window.handleMove = function (data) {
       window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
 
       if (window.game.passCount >= 2) {
-        // 对手主动结束
         logDebug("☑️ 双方弃权结束，对手发来终局信号");
-        endGameByPass(data.summary); // 带有 summary 的 gameover
+        endGameByPass(data.summary); // 如果对手发来终局总结，展示之
       } else {
         updateBoardUI();
       }
@@ -169,7 +168,7 @@ window.handleMove = function (data) {
       break;
 
     default:
-      // 落子
+      // 落子数据
       if (typeof data.x !== 'number' || typeof data.y !== 'number') {
         logDebug("⛔ 无效的落子数据", true);
         return;
@@ -178,7 +177,6 @@ window.handleMove = function (data) {
       const stoneColor = data.color === 'black' ? 1 : 2;
       window.game.board[data.y][data.x] = stoneColor;
 
-      // 提子数更新
       if (data.captured > 0) {
         if (stoneColor === 1) {
           window.game.capturedStones.black += data.captured;
@@ -301,12 +299,15 @@ function checkGameEnd() {
 }
 
 // 弃权终局处理
-function endGameByPass() {
+function endGameByPass(summary = null) {
   const result = calculateScore();
-  endGame(result.summary);
+  const finalSummary = summary || result.summary;
 
-  if (window.sendMove) {
-    window.sendMove({ type: 'gameover', summary: result.summary });
+  endGame(finalSummary); // 展示终局信息
+
+  // ✅ 如果是我发起的终局，通知对方 gameover（含 summary）
+  if (!summary && window.sendMove) {
+    window.sendMove({ type: 'gameover', summary: finalSummary });
   }
 }
 

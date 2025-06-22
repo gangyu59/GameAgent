@@ -100,28 +100,21 @@ function switchTurn(color) {
 function restartGame(isRemote = false) {
   logDebug("🔄 重新开始新的一局");
 
-  initGame(9);
+  initGame(9); // 重置游戏状态
 
-  // 设置本地玩家颜色
+  // 设置本地玩家身份：远程发起时我执白，反之为黑
   window.game.playerColor = isRemote ? 'white' : 'black';
 
-  // ✅ 重建棋盘（含事件监听）
-  renderBoard();
-
-  // 重启计时器
-  startTimer(window.game.currentPlayer);
-
-  // 重置 UI
+  updateBoardUI();                 // 清空棋盘 UI
+  updatePlayerColorInfo();        // 更新“你执⚫/⚪”提示
+  startTimer(window.game.currentPlayer); // 启动当前方计时器
   document.getElementById("resultBox").style.display = "none";
   document.getElementById("restartBtn").style.display = "none";
 
-  // 通知对手（仅本地发起）
+  // ✅ 如果是本地发起，则通知远程设备也执行重启
   if (!isRemote && window.sendMove) {
     window.sendMove({ type: 'restart' });
   }
-
-  // 更新玩家身份显示
-  updatePlayerColorInfo();
 }
 
 function updatePlayerColorInfo() {
