@@ -93,15 +93,35 @@ function switchPlayer() {
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
 }
 
-function restartGame() {
+function restartGame(isRemote = false) {
   logDebug("🔄 重新开始新的一局");
-  initGame(9); // 重置游戏状态
 
-  // ✅ 恢复玩家颜色（黑先手或由你自己判断）
-  window.game.playerColor = 'black';
+  initGame(9);
 
-  updateBoardUI(); // 清空 UI 棋盘
-  startTimer(window.game.currentPlayer); // 重启计时器
+  // 设置本地玩家颜色
+  window.game.playerColor = isRemote ? 'white' : 'black';
+
+  // ✅ 重建棋盘（含事件监听）
+  renderBoard();
+
+  // 重启计时器
+  startTimer(window.game.currentPlayer);
+
+  // 重置 UI
   document.getElementById("resultBox").style.display = "none";
   document.getElementById("restartBtn").style.display = "none";
+
+  // 通知对手（仅本地发起）
+  if (!isRemote && window.sendMove) {
+    window.sendMove({ type: 'restart' });
+  }
+
+  // 更新玩家身份显示
+  updatePlayerColorInfo();
+}
+
+function updatePlayerColorInfo() {
+  const label = document.getElementById('playerColorLabel');
+  if (!label) return;
+  label.textContent = window.game.playerColor === 'black' ? '⚫' : '⚪';
 }
