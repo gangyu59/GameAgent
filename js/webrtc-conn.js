@@ -65,6 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
     isHost = true;
     window.myPeerId = id;
     window.game.playerColor = 'black';
+	document.getElementById('playerColorLabel').textContent = 
+  			window.game.playerColor === 'black' ? '⚫' : '⚪';
+				
     logDebug(`✅ 房主连接成功 | ID: ${id}`);
     updateMyIdUI(id);
 
@@ -106,6 +109,9 @@ document.addEventListener('DOMContentLoaded', function() {
         isHost = false;
         window.myPeerId = id;
         window.game.playerColor = 'white';
+			document.getElementById('playerColorLabel').textContent = 
+  			window.game.playerColor === 'black' ? '⚫' : '⚪';
+				
         logDebug(`🕊 访客连接成功 | ID: ${id}`);
         updateMyIdUI(id);
 

@@ -274,23 +274,8 @@ function checkGameEnd() {
 
 // 弃权终局处理
 function endGameByPass() {
-  const score = calculateScore();
-  endGame(`游戏结束 - 黑方: ${score.black} 白方: ${score.white}`);
-}
-
-// 计算胜负
-function calculateScore() {
-  // 简易计分法（实际围棋需要更复杂的领地计算）
-  const blackStones = countStones(1);
-  const whiteStones = countStones(2);
-  
-  return {
-    black: blackStones + window.game.capturedStones.white,
-    white: whiteStones + window.game.capturedStones.black,
-    winner: (blackStones + window.game.capturedStones.white) > 
-            (whiteStones + window.game.capturedStones.black + 6.5) ? 
-            '黑方胜' : '白方胜'
-  };
+  const result = calculateScore(); 
+  endGame(result.summary);         
 }
 
 // 辅助函数：统计棋盘上的棋子
@@ -308,11 +293,13 @@ function countStones(color) {
 function endGame(message) {
   logDebug(`\n===== 游戏结束 =====`);
   logDebug(message);
-  
-  // 显示结果
   document.getElementById("resultBox").textContent = message;
   document.getElementById("resultBox").style.display = "block";
   document.getElementById("restartBtn").style.display = "block";
+
+  // 停止计时器
+  stopTimer('black');
+  stopTimer('white');
 }
 
 // 辅助函数：深拷贝棋盘

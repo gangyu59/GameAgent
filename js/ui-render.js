@@ -63,29 +63,23 @@ function updateBoardUI() {
   }
 }
 
-// 修复：添加缺失的函数声明
-function showEndGameModal() {
-  document.getElementById('endGameModal').style.display = 'flex';
-}
-
-function closeEndGameModal() {
-  document.getElementById('endGameModal').style.display = 'none';
-}
-
 function handlePass() {
   window.game.passCount++;
   logDebug(`⚪ 玩家选择放弃着手（累计 ${window.game.passCount} 次）`);
-  closeEndGameModal();
 
   if (window.game.passCount >= 2) {
-    calculateTerritory();
+    const result = calculateScore();
+    const resultBox = document.getElementById("resultBox");
+    resultBox.innerHTML = result.summary;
+    resultBox.style.display = "block";
+	document.getElementById("restartBtn").style.display = "inline-block";
+    logDebug(result.summary);
   } else {
     switchPlayer();
   }
 }
 
 function handleResign() {
-  closeEndGameModal();
   const loser = window.game.currentPlayer;
   const winner = loser === 'black' ? 'white' : 'black';
   const summary = `🏳 ${loser === 'black' ? '⚫ 黑方' : '⚪ 白方'}认输，${winner === 'black' ? '⚫ 黑方' : '⚪ 白方'} 获胜`;
@@ -99,3 +93,15 @@ function switchPlayer() {
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
 }
 
+function restartGame() {
+  logDebug("🔄 重新开始新的一局");
+  initGame(9); // 重置游戏状态
+
+  // ✅ 恢复玩家颜色（黑先手或由你自己判断）
+  window.game.playerColor = 'black';
+
+  updateBoardUI(); // 清空 UI 棋盘
+  startTimer(window.game.currentPlayer); // 重启计时器
+  document.getElementById("resultBox").style.display = "none";
+  document.getElementById("restartBtn").style.display = "none";
+}
