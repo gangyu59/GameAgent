@@ -93,6 +93,10 @@ function switchPlayer() {
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
 }
 
+function switchTurn(color) {
+  return color === 'black' ? 'white' : 'black';
+}
+
 function restartGame(isRemote = false) {
   logDebug("🔄 重新开始新的一局");
 

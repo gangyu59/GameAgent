@@ -132,49 +132,68 @@ function placeStone(x, y, isRemote = false) {
   return true;
 }
 
-// 处理对手落子
-window.handleMove = function(data) {
-  logDebug(`\n===== 处理对手落子 =====`);
+window.handleMove = function (data) {
+  logDebug(`\n===== 处理对手操作 =====`);
   logDebug(`收到数据: ${JSON.stringify(data)}`);
-	
-	if (data.type === 'restart') {
-	  logDebug("♻️ 对手请求重新开始对局");
-	  restartGame(true); // ✅ 标记远程重启方是黑，我是白
-	  return;
-	}
-  
-  // 验证数据
-  if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') {
-    logDebug("⛔ 无效的落子数据", true);
-    return;
+
+  if (!data) return;
+
+  switch (data.type) {
+    case 'restart':
+      logDebug("♻️ 对手请求重新开始对局");
+      restartGame(true); // 对手先手，我执白
+      break;
+
+    case 'pass':
+      logDebug("⏭ 对手弃权");
+      window.game.passCount++;
+      window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
+
+      if (window.game.passCount >= 2) {
+        // 对手主动结束
+        logDebug("☑️ 双方弃权结束，对手发来终局信号");
+        endGameByPass(data.summary); // 带有 summary 的 gameover
+      } else {
+        updateBoardUI();
+      }
+      break;
+
+    case 'resign':
+      logDebug(`🏳 对手认输，${data.winner} 获胜`);
+      endGame(data.winner === 'black' ? '黑方胜（对手认输）' : '白方胜（对手认输）');
+      break;
+
+    case 'gameover':
+      logDebug("📩 收到对手发送的终局结果");
+      endGame(data.summary);
+      break;
+
+    default:
+      // 落子
+      if (typeof data.x !== 'number' || typeof data.y !== 'number') {
+        logDebug("⛔ 无效的落子数据", true);
+        return;
+      }
+
+      const stoneColor = data.color === 'black' ? 1 : 2;
+      window.game.board[data.y][data.x] = stoneColor;
+
+      // 提子数更新
+      if (data.captured > 0) {
+        if (stoneColor === 1) {
+          window.game.capturedStones.black += data.captured;
+        } else {
+          window.game.capturedStones.white += data.captured;
+        }
+      }
+
+      window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
+      window.lastMove = { x: data.x, y: data.y };
+      window.game.passCount = 0;
+
+      updateBoardUI();
+      checkGameEnd();
   }
-
-  // 更新棋盘
-  const stoneColor = data.color === 'black' ? 1 : 2;
-  window.game.board[data.y][data.x] = stoneColor;
-
-  // 更新提子计数
-  if (data.captured > 0) {
-    if (stoneColor === 1) {
-      window.game.capturedStones.black += data.captured;
-    } else {
-      window.game.capturedStones.white += data.captured;
-    }
-  }
-
-  // 更新回合
-  if (data.currentTurn) {
-    window.game.currentPlayer = data.currentTurn;
-  } else {
-    window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
-  }
-
-  logDebug(`对手落子位置: (${data.x},${data.y})`);
-  logDebug(`新回合: ${window.game.currentPlayer}`);
-  logDebug(`最新棋盘:\n${formatBoardForDebug(window.game.board)}`);
-
-  updateBoardUI();
-  checkGameEnd();
 };
 
 // 弃权处理
@@ -283,8 +302,12 @@ function checkGameEnd() {
 
 // 弃权终局处理
 function endGameByPass() {
-  const result = calculateScore(); 
-  endGame(result.summary);         
+  const result = calculateScore();
+  endGame(result.summary);
+
+  if (window.sendMove) {
+    window.sendMove({ type: 'gameover', summary: result.summary });
+  }
 }
 
 // 辅助函数：统计棋盘上的棋子
