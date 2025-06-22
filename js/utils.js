@@ -11,45 +11,79 @@ function getNeighbors(x, y) {
   return neighbors;
 }
 
-// ✅ 计算棋局得分与胜者
+/**
+ * 终局计分：先移除死子，再统计地盘和贴目
+ */
 function calculateScore() {
   const board = window.game.board;
   const size = board.length;
-  const visited = Array(size).fill().map(() => Array(size).fill(false));
-  let blackStones = 0;
-  let whiteStones = 0;
-  let blackTerritory = 0;
-  let whiteTerritory = 0;
 
+  // 深拷贝棋盘用于计算，不改变真实状态
+  const temp = board.map(row => [...row]);
+  const visited = Array.from({ length: size }, () =>
+    Array(size).fill(false)
+  );
+
+  let blackStones = 0, whiteStones = 0,
+      blackTerritory = 0, whiteTerritory = 0;
+
+  // 1. 识别并移除死子（气为0的连通块）
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const cell = board[y][x];
+      const cell = temp[y][x];
+      if ((cell === 1 || cell === 2) && !visited[y][x]) {
+        const group = findGroup(x, y, temp);
+        const liberties = countLiberties(group, temp);
+        group.forEach(([gx, gy]) => visited[gy][gx] = true);
+        if (liberties === 0) {
+          // 标记为死子，移除
+          group.forEach(([gx, gy]) => temp[gy][gx] = 0);
+        }
+      }
+    }
+  }
 
-      if (cell === 1) blackStones++;
-      else if (cell === 2) whiteStones++;
-      else if (cell === 0 && !visited[y][x]) {
-        const area = [];
+  /* reset visited to reuse for territory flood */
+  for (let row of visited) row.fill(false);
+
+  // 2. 计算活子数（移除死子后）
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (temp[y][x] === 1) blackStones++;
+      else if (temp[y][x] === 2) whiteStones++;
+    }
+  }
+
+  // 3. 统计地盘
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (temp[y][x] === 0 && !visited[y][x]) {
         const queue = [[x, y]];
-        let adjacentColor = new Set();
+        const area = [];
+        const surround = new Set();
 
         while (queue.length) {
-          const [cx, cy] = queue.shift();
-          if (cx < 0 || cy < 0 || cx >= size || cy >= size || visited[cy][cx]) continue;
+          const [cx, cy] = queue.pop();
+          if (
+            cx < 0 || cy < 0 ||
+            cx >= size || cy >= size ||
+            visited[cy][cx] ||
+            temp[cy][cx] !== 0
+          ) continue;
 
           visited[cy][cx] = true;
+          area.push([cx, cy]);
 
-          if (board[cy][cx] === 0) {
-            area.push([cx, cy]);
-            queue.push(...getNeighbors(cx, cy));
-          } else {
-            adjacentColor.add(board[cy][cx]);
+          for (const [nx, ny] of getNeighbors(cx, cy)) {
+            const val = temp[ny][nx];
+            if (val === 0 && !visited[ny][nx]) queue.push([nx, ny]);
+            else if (val === 1 || val === 2) surround.add(val);
           }
         }
 
-        if (adjacentColor.size === 1) {
-          const owner = Array.from(adjacentColor)[0];
-          if (owner === 1) blackTerritory += area.length;
-          else if (owner === 2) whiteTerritory += area.length;
+        if (surround.size === 1) {
+          if (surround.has(1)) blackTerritory += area.length;
+          else whiteTerritory += area.length;
         }
       }
     }
@@ -68,7 +102,7 @@ function calculateScore() {
     blackScore,
     whiteScore,
     winner,
-    summary: `⚫ 黑：${blackScore}（${blackStones}子+${blackTerritory}地） vs ⚪ 白：${whiteScore.toFixed(1)}（${whiteStones}子+${whiteTerritory}地+贴目${komi}） ➜ 胜者：${winner === 'black' ? '黑' : '白'}`
+    summary: `⚫ 黑：${blackScore}（${blackStones}子 + ${blackTerritory}地） vs ⚪ 白：${whiteScore.toFixed(1)}（${whiteStones}子 + ${whiteTerritory}地 + 贴目${komi}） ➜ 胜者：${winner === 'black' ? '黑' : '白'}`
   };
 }
 
@@ -134,3 +168,13 @@ window.startTimer = function(playerColor) {
     label.textContent = formatTime(remainingTime[playerColor]);
   }, 1000);
 };
+
+// 预加载落子音效
+const stoneSound = new Audio('assets/stone-sound.mp3');
+
+window.playStoneSound = function() {
+  stoneSound.currentTime = 0;
+  stoneSound.play().catch(e => {
+    console.warn('⚠️ 试图播放落子音效但失败：', e);
+  });
+}

@@ -111,6 +111,9 @@ function placeStone(x, y, isRemote = false) {
   // 10. 更新UI
 	startTimer(window.game.currentPlayer); // 切换计时器
 	window.lastMove = { x, y };
+	
+	window.playStoneSound();  // 播放落子音效
+	
   updateBoardUI();
 
   // ✅ 只本地落子时才发送网络同步
