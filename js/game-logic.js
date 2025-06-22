@@ -136,6 +136,12 @@ function placeStone(x, y, isRemote = false) {
 window.handleMove = function(data) {
   logDebug(`\n===== 处理对手落子 =====`);
   logDebug(`收到数据: ${JSON.stringify(data)}`);
+	
+	if (data.type === 'restart') {
+	  logDebug("♻️ 对手请求重新开始对局");
+	  restartGame(true); // ✅ 标记远程重启方是黑，我是白
+	  return;
+	}
   
   // 验证数据
   if (!data || typeof data.x !== 'number' || typeof data.y !== 'number') {
