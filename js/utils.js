@@ -175,3 +175,7 @@ window.hideConnectionInfo = function() {
     infoBox.style.display = 'none';
   }
 };
+
+window.createEmptyBoard = function(size) {
+  return Array(size).fill().map(() => Array(size).fill(0));
+};

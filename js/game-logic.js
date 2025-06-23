@@ -147,7 +147,7 @@ window.handleMove = function (data) {
 		  window.game.currentPlayer = data.currentPlayer || 'black';
 		  window.game.playerColor = data.playerColor === 'black' ? 'white' : 'black'; // 对方是黑，我是白
 		
-		  updateBoardUI();
+		  renderBoard(); // ✅ 清空棋盘 + 重新绘制所有交叉点 + 绑定点击事件
 		  startTimer(window.game.currentPlayer);
 		  updatePlayerColorInfo();
 		
