@@ -1,16 +1,5 @@
 // utils.js：工具函数集合
 
-// ✅ 获取某点上下左右邻居
-function getNeighbors(x, y) {
-  const size = window.game.boardSize;
-  const neighbors = [];
-  if (x > 0) neighbors.push([x - 1, y]);
-  if (x < size - 1) neighbors.push([x + 1, y]);
-  if (y > 0) neighbors.push([x, y - 1]);
-  if (y < size - 1) neighbors.push([x, y + 1]);
-  return neighbors;
-}
-
 /**
  * 终局计分：先移除死子，再统计地盘和贴目
  */
@@ -178,3 +167,10 @@ window.playStoneSound = function() {
     console.warn('⚠️ 试图播放落子音效但失败：', e);
   });
 }
+
+window.hideConnectionInfo = function() {
+  const infoBox = document.getElementById('waitingView');
+  if (infoBox) {
+    infoBox.style.display = 'none';
+  }
+};

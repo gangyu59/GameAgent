@@ -144,18 +144,19 @@ window.handleMove = function (data) {
       restartGame(true); // 对手先手，我执白
       break;
 
-    case 'pass':
-      logDebug("⏭ 对手弃权");
-      window.game.passCount++;
-      window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
-
-      if (window.game.passCount >= 2) {
-        logDebug("☑️ 双方弃权结束，对手发来终局信号");
-        endGameByPass(data.summary); // 如果对手发来终局总结，展示之
-      } else {
-        updateBoardUI();
-      }
-      break;
+		case 'pass':
+		  logDebug("⏭ 对手弃权");
+		  window.game.passCount++;
+		  window.game.waitingForOpponentPass = false;
+		  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
+		
+		  if (window.game.passCount >= 2) {
+		    logDebug("☑️ 双方弃权结束，对手发来终局信号");
+		    endGameByPass(data.summary); // 对手计算出的结果
+		  } else {
+		    updateBoardUI();
+		  }
+		  break;
 
     case 'resign':
       logDebug(`🏳 对手认输，${data.winner} 获胜`);
@@ -196,21 +197,26 @@ window.handleMove = function (data) {
 
 // 弃权处理
 function handlePass() {
+  if (window.game.waitingForOpponentPass) {
+    logDebug("⏸ 请等待对手回应上一次弃权，不能连续弃权", true);
+    return;
+  }
+
   logDebug(`\n===== ${window.game.currentPlayer}方弃权 =====`);
   window.game.passCount++;
-  window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
-  
+  window.game.waitingForOpponentPass = true;
+
   if (window.sendMove) {
     window.sendMove({
       type: 'pass',
-      currentTurn: window.game.currentPlayer
+      currentTurn: switchTurn(window.game.currentPlayer)
     });
   }
 
   if (window.game.passCount >= 2) {
-    endGameByPass();
+    endGameByPass(); // 会负责 sendMove(gameover)
   } else {
-    logDebug(`连续弃权次数: ${window.game.passCount}`);
+    switchPlayer();
   }
 }
 
