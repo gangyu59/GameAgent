@@ -168,6 +168,7 @@ window.playStoneSound = function() {
   });
 }
 
+//隐去Peer ID和房间信息
 window.hideConnectionInfo = function() {
   const infoBox = document.getElementById('waitingView');
   if (infoBox) {

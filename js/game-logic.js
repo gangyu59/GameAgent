@@ -139,10 +139,21 @@ window.handleMove = function (data) {
   if (!data) return;
 
   switch (data.type) {
-    case 'restart':
-      logDebug("♻️ 对手请求重新开始对局");
-      restartGame(true); // 对手先手，我执白
-      break;
+		case 'restart':
+		  logDebug("♻️ 对手请求重新开始对局");
+		
+		  // ✅ 覆盖初始化参数
+		  window.game.board = data.board || createEmptyBoard(9);
+		  window.game.currentPlayer = data.currentPlayer || 'black';
+		  window.game.playerColor = data.playerColor === 'black' ? 'white' : 'black'; // 对方是黑，我是白
+		
+		  updateBoardUI();
+		  startTimer(window.game.currentPlayer);
+		  updatePlayerColorInfo();
+		
+		  document.getElementById("resultBox").style.display = "none";
+		  document.getElementById("restartBtn").style.display = "none";
+		  break;
 
 		case 'pass':
 		  logDebug("⏭ 对手弃权");

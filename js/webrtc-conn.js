@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
       conn.on('open', () => {
         logDebug("🔗 连接已就绪");
 				
-				hideConnectionInfo(); // ✅ 隐藏等待提示
+				setTimeout(() => hideConnectionInfo(), 100);
 				
         // 发送完整游戏状态
         conn.send(JSON.stringify({
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logDebug(`🕊 访客连接成功 | ID: ${id}`);
         updateMyIdUI(id);
 				
-				hideConnectionInfo(); // ✅ 隐藏等待提示
+				setTimeout(() => hideConnectionInfo(), 100);
 
         const conn = peer.connect(FIXED_ID);
         conn.on('open', () => {

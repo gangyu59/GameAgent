@@ -111,7 +111,12 @@ function restartGame(isRemote = false) {
   document.getElementById("restartBtn").style.display = "none";
 
   if (!isRemote && window.sendMove) {
-    window.sendMove({ type: 'restart' });
+    window.sendMove({
+		  type: 'restart',
+		  board: window.game.board,             // 空棋盘
+		  currentPlayer: window.game.currentPlayer,
+		  playerColor: 'black'                  // 发起方默认执黑
+		});
   }
 
   hideConnectionInfo(); // 同步隐藏连接信息
