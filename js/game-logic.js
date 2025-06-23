@@ -142,15 +142,20 @@ window.handleMove = function (data) {
 		case 'restart':
 		  logDebug("♻️ 对手请求重新开始对局");
 		
-		  // ✅ 覆盖初始化参数
+		  // ✅ 重置整个游戏状态（最关键！）
+		  initGame(9);  // 初始化完整状态结构
+		
+		  // ✅ 设置新身份
+		  window.game.playerColor = data.playerColor === 'black' ? 'white' : 'black';
 		  window.game.board = data.board || createEmptyBoard(9);
 		  window.game.currentPlayer = data.currentPlayer || 'black';
-		  window.game.playerColor = data.playerColor === 'black' ? 'white' : 'black'; // 对方是黑，我是白
 		
-		  renderBoard(); // ✅ 清空棋盘 + 重新绘制所有交叉点 + 绑定点击事件
-		  startTimer(window.game.currentPlayer);
+		  // ✅ 强制重绘 + 更新提示
+		  renderBoard();  // ⬅️ 清除所有旧DOM和监听器
 		  updatePlayerColorInfo();
+		  startTimer(window.game.currentPlayer);
 		
+		  // ✅ 清理 UI
 		  document.getElementById("resultBox").style.display = "none";
 		  document.getElementById("restartBtn").style.display = "none";
 		  break;
