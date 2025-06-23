@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	  });
 	};
 
-  // ========== 关键修复5：数据处理 ==========
 	function handleRemoteMove(data) {
 	  try {
 	    const msg = typeof data === 'string' ? JSON.parse(data) : data;
@@ -157,14 +156,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	      logDebug("🔄 执行同步数据");
 	      window.game.board = msg.board || window.game.board;
 	      window.game.currentPlayer = msg.currentPlayer || 'black';
-	      updateBoardUI(); // 重新绘制
+	      updateBoardUI(); // 同步更新棋盘
 	      return;
 	    }
 	
+	    // ✅ 只处理落子，其它类型转交给 handleMove
 	    if (typeof msg.x === 'number' && typeof msg.y === 'number') {
 	      logDebug("🎯 远程落子请求，调用 placeStone()");
-	      placeStone(msg.x, msg.y, true);  // ✅ 远程落子
+	      placeStone(msg.x, msg.y, true);  // ✅ 落子由此负责
+	      return;
 	    }
+	
+	    // ✅ 其余请求交由 handleMove 统一处理（restart、pass、resign、gameover）
+	    handleMove(msg);
 	
 	  } catch (e) {
 	    logDebug(`❌ 数据解析错误: ${e.message}`, true);
