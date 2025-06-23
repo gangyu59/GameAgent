@@ -143,12 +143,12 @@ window.handleMove = function (data) {
 		  logDebug("♻️ 对手请求重新开始对局");
 		
 		  // ✅ 重置整个游戏状态（最关键！）
-		  initGame(9);  // 初始化完整状态结构
-		
-		  // ✅ 设置新身份
-		  window.game.playerColor = data.playerColor === 'black' ? 'white' : 'black';
-		  window.game.board = data.board || createEmptyBoard(9);
-		  window.game.currentPlayer = data.currentPlayer || 'black';
+		  initGame(9);  // 初始化清空后
+			Object.assign(window.game, {
+			  board: data.board || createEmptyBoard(9),
+			  currentPlayer: data.currentPlayer || 'black',
+			  playerColor: data.playerColor === 'black' ? 'white' : 'black'
+			});
 		
 		  // ✅ 强制重绘 + 更新提示
 		  renderBoard();  // ⬅️ 清除所有旧DOM和监听器
