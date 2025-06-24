@@ -104,22 +104,24 @@ window.logDebug = function(msg, isError = false) {
   console[isError ? "error" : "log"](msg);
 };
 
-
-let timerHandles = {
+// 全局定时器句柄
+window.timerHandles = {
   black: null,
   white: null
 };
 
-let remainingTime = {
-  black: 3600, // 秒
+// 全局剩余时间（默认每方 1 小时）
+window.remainingTime = {
+  black: 3600,
   white: 3600
 };
 
-function formatTime(seconds) {
+// 格式化秒为 mm:ss
+window.formatTime = function(seconds) {
   const min = String(Math.floor(seconds / 60)).padStart(2, '0');
   const sec = String(seconds % 60).padStart(2, '0');
   return `${min}:${sec}`;
-}
+};
 
 /**
  * 启动倒计时

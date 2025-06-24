@@ -3,9 +3,16 @@
 function renderBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
-  const size = 9;
-  const cellSize = 66;
-  const starPoints = [[2,2],[6,2],[2,6],[6,6],[4,4]];
+
+  const size = window.game.boardSize;
+
+  // ✅ 计算并设置动态 CSS 变量（棋盘尺寸 & 格子尺寸）
+  const cellSize = Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.8 / size);
+  document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+  document.documentElement.style.setProperty('--line-count', size);
+  document.documentElement.style.setProperty('--grid-size', `calc(${size - 1} * var(--cell-size))`);
+
+  const starPoints = getStarPoints(size);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -35,6 +42,13 @@ function renderBoard() {
   }
 
   updateBoardUI();
+}
+
+function getStarPoints(size) {
+  if (size === 9) return [[2,2],[6,2],[2,6],[6,6],[4,4]];
+  if (size === 13) return [[3,3],[9,3],[3,9],[9,9],[6,6]];
+  if (size === 19) return [[3,3],[9,3],[15,3],[3,9],[9,9],[15,9],[3,15],[9,15],[15,15]];
+  return [];
 }
 
 function updateBoardUI() {
@@ -74,26 +88,44 @@ function switchTurn(color) {
 function restartGame(isRemote = false) {
   logDebug("🔄 重新开始新的一局");
 
-  initGame(9);
+  // ✅ 清除双边定时器
+  if (window.timerHandles) {
+    for (const color of ['black', 'white']) {
+      if (timerHandles[color]) {
+        clearInterval(timerHandles[color]);
+        timerHandles[color] = null;
+        document.getElementById(`${color}-timer`).classList.remove('active');
+      }
+    }
+  }
+
+  // ✅ 重置剩余时间（比如每方 60 秒）
+  window.remainingTime = {
+    black: 3600,
+    white: 3600
+  };
+
+  // ✅ 重置棋盘状态
+  initGame(window.game.boardSize);
   window.game.playerColor = isRemote ? 'white' : 'black';
 
   updateBoardUI();
   updatePlayerColorInfo();
-  startTimer(window.game.currentPlayer);
+  startTimer(window.game.currentPlayer);  // ✅ 启动当前玩家的计时器
 
   document.getElementById("resultBox").style.display = "none";
   document.getElementById("restartBtn").style.display = "none";
 
   if (!isRemote && window.sendMove) {
     window.sendMove({
-		  type: 'restart',
-		  board: window.game.board,             // 空棋盘
-		  currentPlayer: window.game.currentPlayer,
-		  playerColor: 'black'                  // 发起方默认执黑
-		});
+      type: 'restart',
+      board: window.game.board,
+      currentPlayer: window.game.currentPlayer,
+      playerColor: 'black'
+    });
   }
 
-  hideConnectionInfo(); // 同步隐藏连接信息
+  hideConnectionInfo();
 }
 
 function updatePlayerColorInfo() {
