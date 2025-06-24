@@ -103,6 +103,10 @@ function placeStone(x, y, isRemote = false) {
   window.game.passCount = 0;
   window.game.koPosition = capturedStones.length === 1 ? capturedStones[0] : null;
 
+	// 在 placeStone 成功落子后添加：
+	window.game.passCount = 0;
+	window.game.waitingForOpponentPass = false;
+
   logDebug(`✅ 落子成功: (${x},${y})`);
   logDebug(`新回合: ${window.game.currentPlayer}`);
   logDebug(`提子统计 - 黑:${window.game.capturedStones.black} 白:${window.game.capturedStones.white}`);
@@ -160,20 +164,23 @@ window.handleMove = function (data) {
 		  document.getElementById("restartBtn").style.display = "none";
 		  break;
 
-		case 'pass':
-		  logDebug("⏭ 对手弃权");
-		  window.game.passCount++;
-		  window.game.waitingForOpponentPass = false;
-		  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
-		
-		  if (window.game.passCount >= 2) {
-		    logDebug("☑️ 双方弃权结束，对手发来终局信号");
-		    endGameByPass(data.summary); // 对手计算出的结果
-		  } else {
-		    updateBoardUI();
-		  }
-		  break;
+case 'pass':
+  logDebug(`⏭ 对手选择放弃着手（累计 ${window.game.passCount + 1} 次）`);
+  window.game.passCount++;
+  window.game.waitingForOpponentPass = false;
+  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
 
+  const passBtn = document.getElementById("passBtn");
+  if (passBtn) passBtn.disabled = false;
+
+  if (window.game.passCount >= 2) {
+    logDebug("☑️ 双方弃权结束，对手发来终局信号");
+    endGameByPass(data.summary);
+  } else {
+    updateBoardUI();
+  }
+  break;
+	
     case 'resign':
       logDebug(`🏳 对手认输，${data.winner} 获胜`);
       endGame(data.winner === 'black' ? '黑方胜（对手认输）' : '白方胜（对手认输）');
@@ -211,14 +218,18 @@ window.handleMove = function (data) {
   }
 };
 
-// 弃权处理
-function handlePass() {
+//弃权处理
+window.handlePass = function () {
+  console.log("🔥 handlePass 被点击");
+
   if (window.game.waitingForOpponentPass) {
     logDebug("⏸ 请等待对手回应上一次弃权，不能连续弃权", true);
     return;
   }
 
-  logDebug(`\n===== ${window.game.currentPlayer}方弃权 =====`);
+  const passBtn = document.getElementById("passBtn");
+  if (passBtn) passBtn.disabled = true;
+
   window.game.passCount++;
   window.game.waitingForOpponentPass = true;
 
@@ -229,29 +240,17 @@ function handlePass() {
     });
   }
 
-  if (window.game.passCount >= 2) {
-    endGameByPass(); // 会负责 sendMove(gameover)
-  } else {
-    switchPlayer();
-  }
-}
+  updateBoardUI();
+};
 
-// 认输处理
 function handleResign() {
   const loser = window.game.currentPlayer;
   const winner = loser === 'black' ? 'white' : 'black';
-  
-  logDebug(`\n===== ${loser}方认输 =====`);
-  logDebug(`🎉 ${winner}方获胜`);
-
-  if (window.sendMove) {
-    window.sendMove({
-      type: 'resign',
-      winner: winner
-    });
-  }
-
-  endGame(winner === 'black' ? '黑方胜（对手认输）' : '白方胜（对手认输）');
+  const summary = `🏳 ${loser === 'black' ? '⚫ 黑方' : '⚪ 白方'}认输，${winner === 'black' ? '⚫ 黑方' : '⚪ 白方'} 获胜`;
+  document.getElementById("resultBox").innerHTML = summary;
+  document.getElementById("resultBox").style.display = "block";
+  document.getElementById("restartBtn").style.display = "inline-block";
+  logDebug(summary);
 }
 
 // 辅助函数：获取相邻位置

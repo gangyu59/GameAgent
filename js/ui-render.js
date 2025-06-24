@@ -63,32 +63,6 @@ function updateBoardUI() {
   }
 }
 
-function handlePass() {
-  window.game.passCount++;
-  logDebug(`⚪ 玩家选择放弃着手（累计 ${window.game.passCount} 次）`);
-
-  if (window.game.passCount >= 2) {
-    const result = calculateScore();
-    const resultBox = document.getElementById("resultBox");
-    resultBox.innerHTML = result.summary;
-    resultBox.style.display = "block";
-	document.getElementById("restartBtn").style.display = "inline-block";
-    logDebug(result.summary);
-  } else {
-    switchPlayer();
-  }
-}
-
-function handleResign() {
-  const loser = window.game.currentPlayer;
-  const winner = loser === 'black' ? 'white' : 'black';
-  const summary = `🏳 ${loser === 'black' ? '⚫ 黑方' : '⚪ 白方'}认输，${winner === 'black' ? '⚫ 黑方' : '⚪ 白方'} 获胜`;
-  document.getElementById("resultBox").innerHTML = summary;
-  document.getElementById("resultBox").style.display = "block";
-  document.getElementById("restartBtn").style.display = "inline-block";
-  logDebug(summary);
-}
-
 function switchPlayer() {
   window.game.currentPlayer = window.game.currentPlayer === 'black' ? 'white' : 'black';
 }
