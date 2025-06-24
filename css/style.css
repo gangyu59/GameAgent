@@ -6,10 +6,12 @@ body {
   font-size: 150%;
 }
 
+
+
 :root {
-  --cell-size: 66px;            /* 格子尺寸 */
-  --stone-size: 55px;           /* 棋子尺寸 */
-  --line-count: 9;              /* 线条数量 */
+  --cell-size: 66px;
+  --stone-size: calc(var(--cell-size) * 0.85);
+  --line-count: 9;
   --grid-size: calc((var(--line-count) - 1) * var(--cell-size));
 }
 
@@ -17,6 +19,8 @@ body {
   position: relative;
   width: var(--grid-size);
   height: var(--grid-size);
+  max-width: 100vw;
+  max-height: 80vh;
   background-color: #DCB35C;
   border: 2px solid #333;
   margin: 20px auto;
