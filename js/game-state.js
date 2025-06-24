@@ -1,7 +1,7 @@
 //game-state.js
 
 // 游戏初始状态
-const defaultSize = 9; // 支持 9, 13, 19
+const defaultSize = 13; // 支持 9, 13, 19
 
 window.game = {
   boardSize: defaultSize,

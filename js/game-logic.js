@@ -3,23 +3,25 @@
  * 包含：落子规则、吃子逻辑、打劫、弃权、认输、胜负判定等
  */
 
-// 初始化游戏状态
-function initGame(boardSize = 9) {
+function initGame(boardSize) {
+  boardSize = boardSize || window.game.boardSize;
+
   window.game = {
     boardSize: boardSize,
     board: Array.from({ length: boardSize }, () => Array(boardSize).fill(0)),
-    currentPlayer: 'black', // black或white
-    playerColor: null,      // 当前玩家的颜色
-    previousBoard: null,    // 上一步棋盘状态（用于打劫检测）
-    passCount: 0,           // 连续弃权次数
-    koPosition: null,       // 打劫位置
-    capturedStones: {       // 提子计数
+    currentPlayer: 'black',
+    playerColor: null,
+    previousBoard: null,
+    passCount: 0,
+    koPosition: null,
+    capturedStones: {
       black: 0,
       white: 0
     }
   };
-  logDebug("游戏初始化完成");
-  logDebug(`初始棋盘状态:\n${formatBoardForDebug(window.game.board)}`);
+
+  logDebug("✅ 游戏初始化完成");
+  logDebug(`📐 当前棋盘尺寸: ${boardSize}`);
 }
 
 // 核心落子逻辑
@@ -147,9 +149,9 @@ window.handleMove = function (data) {
 		  logDebug("♻️ 对手请求重新开始对局");
 		
 		  // ✅ 重置整个游戏状态（最关键！）
-		  initGame(9);  // 初始化清空后
+		  initGame(window.game.boardSize);  // 初始化清空后
 			Object.assign(window.game, {
-			  board: data.board || createEmptyBoard(9),
+			  board: data.board || createEmptyBoard(window.game.boardSize),
 			  currentPlayer: data.currentPlayer || 'black',
 			  playerColor: data.playerColor === 'black' ? 'white' : 'black'
 			});
@@ -164,22 +166,22 @@ window.handleMove = function (data) {
 		  document.getElementById("restartBtn").style.display = "none";
 		  break;
 
-case 'pass':
-  logDebug(`⏭ 对手选择放弃着手（累计 ${window.game.passCount + 1} 次）`);
-  window.game.passCount++;
-  window.game.waitingForOpponentPass = false;
-  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
-
-  const passBtn = document.getElementById("passBtn");
-  if (passBtn) passBtn.disabled = false;
-
-  if (window.game.passCount >= 2) {
-    logDebug("☑️ 双方弃权结束，对手发来终局信号");
-    endGameByPass(data.summary);
-  } else {
-    updateBoardUI();
-  }
-  break;
+		case 'pass':
+		  logDebug(`⏭ 对手选择放弃着手（累计 ${window.game.passCount + 1} 次）`);
+		  window.game.passCount++;
+		  window.game.waitingForOpponentPass = false;
+		  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
+		
+		  const passBtn = document.getElementById("passBtn");
+		  if (passBtn) passBtn.disabled = false;
+		
+		  if (window.game.passCount >= 2) {
+		    logDebug("☑️ 双方弃权结束，对手发来终局信号");
+		    endGameByPass(data.summary);
+		  } else {
+		    updateBoardUI();
+		  }
+		  break;
 	
     case 'resign':
       logDebug(`🏳 对手认输，${data.winner} 获胜`);
@@ -383,4 +385,4 @@ function formatBoardForDebug(board) {
 }
 
 // 初始化游戏
-initGame(9);
+initGame(window.game.boardSize);
