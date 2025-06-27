@@ -252,6 +252,16 @@ button {
   color: white;
 }
 
+/* AI 已接管时让按钮变红 */
+.game-action-btn.ai-active {
+  background-color: #c40000 !important;   /* 深红 */
+  border-color: #ff8080 !important;
+}
+
+.game-action-btn.ai-active:hover {
+  background-color: #ff4c4c !important;   /* 浅红 */
+}
+
 .player-color-info {
   text-align: center;
   font-size: 28px;
