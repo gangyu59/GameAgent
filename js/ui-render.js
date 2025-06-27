@@ -30,12 +30,24 @@ function renderBoard() {
         intersection.appendChild(star);
       }
 
-      intersection.addEventListener('click', () => {
+/*      intersection.addEventListener('click', () => {
         if (window.game.currentPlayer === window.game.playerColor) {
           placeStone(x, y);
           if (window.sendMove) window.sendMove({ x, y });
         }
       });
+*/
+			
+			intersection.addEventListener('click', () => {
+			  const me = window.game.playerColor;
+			  const isMyTurn   = window.game.currentPlayer === me;
+			  const aiDisabled = !window.aiMode[me];     // 我方未启用 AI
+			
+			  if (isMyTurn && aiDisabled) {
+			    placeStone(x, y);
+			    if (window.sendMove) window.sendMove({ x, y });
+			  }
+			});
 
       board.appendChild(intersection);
     }
