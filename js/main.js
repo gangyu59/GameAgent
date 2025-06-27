@@ -46,36 +46,41 @@ window.aiMode = { black: false, white: false };
 
 /** 切换当前玩家的 AI 状态（由按钮触发） */
 function toggleAIPlayer() {
-  const myColor = window.game.playerColor;         // 我执黑或白
-  const btn      = document.getElementById('aiBtn');
+  const myColor = window.game.playerColor;
+  const btn = document.getElementById("aiBtn");
 
-  // 取反后保存
   window.aiMode[myColor] = !window.aiMode[myColor];
   const isAIOn = window.aiMode[myColor];
 
-  // 更新按钮外观
-  if (isAIOn) {
-    btn.textContent = '停止AI';
-    btn.classList.add('ai-active');
-  } else {
-    btn.textContent = 'AI棋手';
-    btn.classList.remove('ai-active');
-  }
+  // 更新按钮样式和文字
+  btn.textContent = isAIOn ? "停止AI" : "AI棋手";
+  btn.classList.toggle("ai-active", isAIOn);
 
-  logDebug(`${myColor} 方 AI 模式 ⇒ ${isAIOn ? '开启' : '关闭'}`);
+  logDebug(`${myColor} 方 AI 模式 ⇒ ${isAIOn ? "开启" : "关闭"}`);
 
-  // 如果刚刚启用且当前轮到我方，立即让 AI 落子
+  // 如果启用了 AI 且当前轮到我方，立即启动落子
   if (isAIOn && window.game.currentPlayer === myColor) {
     setTimeout(() => requestAIMove(myColor), 300);
   }
 }
 
-/** 让指定颜色的 AI 走一步（或 pass） */
+/** AI 执行落子或 Pass，并检查是否继续 AI 接管 */
 function requestAIMove(color) {
   const move = AIAgent.getNextMove(window.game.board, color);
   if (!move) {
-    handlePass();                   // 无合法点 ⇒ pass
+    handlePass();
   } else {
-    placeStone(move.x, move.y);     // 正常落子
+    placeStone(move.x, move.y);
+  }
+
+  // ✅ 无论是否 pass 或落子，检查下一步是否仍是 AI
+  maybeTriggerNextAIMove();
+}
+
+/** 判断当前轮到的一方是否由 AI 控制，若是则自动触发 */
+function maybeTriggerNextAIMove() {
+  const next = window.game.currentPlayer;
+  if (window.aiMode[next]) {
+    setTimeout(() => requestAIMove(next), 300);
   }
 }
