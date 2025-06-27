@@ -37,6 +37,7 @@
 	<div id="gameActions" style="margin-top: 20px; text-align: center;">
 	  <button id="passBtn" onclick="handlePass()" class="game-action-btn">Pass</button>
 	  <button id="resignBtn" onclick="handleResign()" class="game-action-btn">认输</button>
+	  <button id="aiBtn" onclick="toggleAIPlayer()" class="game-action-btn">AI棋手</button>
 	</div>
 	
 	<!-- 自动配对等待视图 -->
@@ -68,6 +69,7 @@
 	<script src="js/game-logic.js"></script>
   <script src="js/webrtc-conn.js"></script>
   <script src="js/ui-render.js"></script>
+	<script src="js/ai-agent.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

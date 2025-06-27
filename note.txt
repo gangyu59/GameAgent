@@ -3,11 +3,14 @@ GameAgent/
 ├── css/
 │   └── style.css       # 所有样式集中在此
 └── js/
-    ├── firebase-init.js
-    ├── webrtc-conn.js
-    ├── game-logic.js
-    ├── ui-render.js
-    └── utils.js
+    ├── firebase-init.js   #创建实时在线数据交换
+    ├── webrtc-conn.js   #实现Wi-Fi联通
+    ├── game-logic.js   #定义游戏规则，结束条件
+    ├── ui-render.js    #棋盘渲染
+    └── utils.js  #终局时数子决定胜负
+    └── game-state.js  #棋盘大小和初始状态设置
+		└── ai-agent.js  #用AI棋手来替代人类棋手
+    └── main.js  #临时设置debug区域和console区域
 		
 以下是基于 **WebRTC + Firebase** 的 **模块化棋牌游戏系统设计**，采用渐进式开发策略，你可以逐步实现核心功能，再扩展高级特性。  
 
