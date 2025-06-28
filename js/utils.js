@@ -193,3 +193,29 @@ window.getNeighbors = function(x, y, size) {
   return dirs.map(([dx, dy]) => [x+dx, y+dy])
     .filter(([nx, ny]) => nx >=0 && ny >=0 && nx < size && ny < size);
 }
+
+// 随机走子（带有效性检查）
+window.getRandomMove = function(board, color) {
+  const empties = [];
+  for (let y = 0; y < board.length; y++) {
+    for (let x = 0; x < board.length; x++) {
+      if (board[y][x] === 0 && window.AIEval.isValidMove(board, x, y, color)) {
+        empties.push({x, y});
+      }
+    }
+  }
+  return empties.length > 0 ? empties[Math.floor(Math.random() * empties.length)] : null;
+};
+
+// 超时检查工具
+window.runWithTimeout = function(fn, timeoutMs, fallbackResult) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      resolve(fallbackResult);
+    }, timeoutMs);
+    
+    const result = fn();
+    clearTimeout(timer);
+    resolve(result);
+  });
+};
