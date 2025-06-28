@@ -181,3 +181,15 @@ window.hideConnectionInfo = function() {
 window.createEmptyBoard = function(size) {
   return Array(size).fill().map(() => Array(size).fill(0));
 };
+
+// 棋盘工具
+window.copyBoard = function(board) {
+  return board.map(row => row.slice());
+}
+
+// 获取相邻点位
+window.getNeighbors = function(x, y, size) {
+  const dirs = [[-1,0], [1,0], [0,-1], [0,1]];
+  return dirs.map(([dx, dy]) => [x+dx, y+dy])
+    .filter(([nx, ny]) => nx >=0 && ny >=0 && nx < size && ny < size);
+}
