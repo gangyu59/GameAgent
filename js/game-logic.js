@@ -121,6 +121,10 @@ function placeStone(x, y, isRemote = false) {
 	window.playStoneSound();  // 播放落子音效
 	
   updateBoardUI();
+	
+	if (typeof window.onTurnChanged === 'function') {
+	  window.onTurnChanged();
+	}
 
   // ✅ 只本地落子时才发送网络同步
   if (!isRemote && window.sendMove) {

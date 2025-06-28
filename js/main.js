@@ -57,34 +57,26 @@ function toggleAIPlayer() {
 
   logDebug(`${myColor} 方 AI 模式 ⇒ ${isAIOn ? '开启' : '关闭'}`);
 
-  // ✅ 若启用且当前轮到我方，立即触发落子（仅一次）
+  // ✅ 当前是我方回合且刚刚启用 AI，立刻触发一次
   if (isAIOn && window.game.currentPlayer === myColor) {
-    setTimeout(() => requestAIMove(myColor), 300);
+    requestAIMove(myColor);
   }
 }
 
-/** AI 执行落子或 Pass，并检查是否继续 AI 接管 */
+/** AI 执行落子或 Pass */
 function requestAIMove(color) {
   const move = AIAgent.getNextMove(window.game.board, color);
-  let success = false;
-
   if (!move) {
     handlePass();
-    success = true;
   } else {
-    success = placeStone(move.x, move.y);
-  }
-
-  // ✅ 只有落子或 pass 成功后，才考虑继续 AI
-  if (success) {
-    maybeTriggerNextAIMove();
+    placeStone(move.x, move.y);
   }
 }
 
-/** 判断当前轮到的一方是否由 AI 控制，若是则自动触发 */
-function maybeTriggerNextAIMove() {
+/** 当回合变更时自动检查是否由 AI 接管 */
+window.onTurnChanged = function () {
   const next = window.game.currentPlayer;
   if (window.aiMode[next]) {
-    setTimeout(() => requestAIMove(next), 300);
+    requestAIMove(next);
   }
-}
+};
