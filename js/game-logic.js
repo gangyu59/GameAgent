@@ -145,44 +145,44 @@ window.handleMove = function (data) {
   if (!data) return;
 
   switch (data.type) {
-		case 'restart':
-		  logDebug("♻️ 对手请求重新开始对局");
-		
-		  // ✅ 重置整个游戏状态（最关键！）
-		  initGame(window.game.boardSize);  // 初始化清空后
-			Object.assign(window.game, {
-			  board: data.board || createEmptyBoard(window.game.boardSize),
-			  currentPlayer: data.currentPlayer || 'black',
-			  playerColor: data.playerColor === 'black' ? 'white' : 'black'
-			});
-		
-		  // ✅ 强制重绘 + 更新提示
-		  renderBoard();  // ⬅️ 清除所有旧DOM和监听器
-		  updatePlayerColorInfo();
-		  startTimer(window.game.currentPlayer);
-		
-		  // ✅ 清理 UI
-		  document.getElementById("resultBox").style.display = "none";
-		  document.getElementById("restartBtn").style.display = "none";
-		  break;
+    case 'restart':
+      logDebug("♻️ 对手请求重新开始对局");
 
-		case 'pass':
-		  logDebug(`⏭ 对手选择放弃着手（累计 ${window.game.passCount + 1} 次）`);
-		  window.game.passCount++;
-		  window.game.waitingForOpponentPass = false;
-		  window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
-		
-		  const passBtn = document.getElementById("passBtn");
-		  if (passBtn) passBtn.disabled = false;
-		
-		  if (window.game.passCount >= 2) {
-		    logDebug("☑️ 双方弃权结束，对手发来终局信号");
-		    endGameByPass(data.summary);
-		  } else {
-		    updateBoardUI();
-		  }
-		  break;
-	
+      // ✅ 重置整个游戏状态（最关键！）
+      initGame(window.game.boardSize);
+      Object.assign(window.game, {
+        board: data.board || createEmptyBoard(window.game.boardSize),
+        currentPlayer: data.currentPlayer || 'black',
+        playerColor: data.playerColor === 'black' ? 'white' : 'black'
+      });
+
+      // ✅ 强制重绘 + 更新提示
+      renderBoard();
+      updatePlayerColorInfo();
+      startTimer(window.game.currentPlayer);
+
+      // ✅ 清理 UI
+      document.getElementById("resultBox").style.display = "none";
+      document.getElementById("restartBtn").style.display = "none";
+      break;
+
+    case 'pass':
+      logDebug(`⏭ 对手选择放弃着手（累计 ${window.game.passCount + 1} 次）`);
+      window.game.passCount++;
+      window.game.waitingForOpponentPass = false;
+      window.game.currentPlayer = data.currentTurn || switchTurn(window.game.currentPlayer);
+
+      const passBtn = document.getElementById("passBtn");
+      if (passBtn) passBtn.disabled = false;
+
+      if (window.game.passCount >= 2) {
+        logDebug("☑️ 双方弃权结束，对手发来终局信号");
+        endGameByPass(data.summary);
+      } else {
+        updateBoardUI();
+      }
+      break;
+
     case 'resign':
       logDebug(`🏳 对手认输，${data.winner} 获胜`);
       endGame(data.winner === 'black' ? '黑方胜（对手认输）' : '白方胜（对手认输）');
@@ -217,6 +217,12 @@ window.handleMove = function (data) {
 
       updateBoardUI();
       checkGameEnd();
+
+      // ✅ 若对方落子后轮到的这一方被 AI 接管，立即触发 AI 落子
+			const next = window.game.currentPlayer;
+			if (window.aiMode[next]) {
+			  setTimeout(() => requestAIMove(next), 300);
+			}
   }
 };
 
